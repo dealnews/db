@@ -284,8 +284,8 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
             $this->markTestSkipped("PDO SQLite Driver not installed");
         }
 
-        $db1 = Factory::init("chinook");
-        $db2 = Factory::init("chinook");
+        $db1 = Factory::init("testdb");
+        $db2 = Factory::init("testdb");
 
         $this->assertSame($db1, $db2);
     }

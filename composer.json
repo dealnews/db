@@ -8,7 +8,8 @@
     },
     "require": {
         "php": ">=7.1.0",
-        "dealnews/get-config": "^1.0"
+        "dealnews/get-config": "^1.0",
+        "dealnews/data-mapper": "^0.9.0"
     },
     "autoload": {
         "psr-4": {
