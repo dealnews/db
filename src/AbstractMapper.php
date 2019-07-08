@@ -184,6 +184,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
                 $object = $this->load($this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
 
+                if (!$already_in_transaction) {
+                    $this->crud->pdo->commit();
+                }
+
             } else {
                 $this->crud->pdo->rollBack();
             }
