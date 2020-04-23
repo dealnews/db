@@ -4,12 +4,12 @@
     "license": "BSD-3-Clause",
     "description": "Database Library providing a PDO factory and CRUD operations",
     "require-dev": {
-        "phpunit/phpunit": "^7.5"
+        "phpunit/phpunit": "^9.1"
     },
     "require": {
-        "php": ">=7.1.0",
+        "php": "^7.3",
         "dealnews/get-config": "^1.0",
-        "dealnews/data-mapper": "^0.9.0"
+        "dealnews/data-mapper": "^1.1"
     },
     "autoload": {
         "psr-4": {

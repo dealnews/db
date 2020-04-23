@@ -21,7 +21,7 @@ class Factory {
     /**
      * default ini prefix for db config
      */
-    const CONFIG_PREFIX = "";
+    const CONFIG_PREFIX = 'dealnews.db';
 
     /**
      * Creates a new PDO connection or returns one that already exists
@@ -39,22 +39,21 @@ class Factory {
      * @throws \PDOException
      * @throws \LogicException
      */
-    public static function init(string $db, array $options = null, string $type = null) {
-
+    public static function init(string $db, array $options = null, string $type = null): PDO {
         static $objs;
 
         if (!empty($type)) {
-            $key = $type.".".$db;
+            $key = $type . '.' . $db;
         } else {
             $key = $db;
         }
         if (!empty($options)) {
-            $key .= ".".md5(json_encode($options));
+            $key .= '.' . md5(json_encode($options));
         }
 
         if (!isset($objs[$key])) {
             $objs[$key] = false;
-            $obj = self::build(self::load_config(self::get_config($db), $options, $type));
+            $obj        = self::build(self::loadConfig(self::getConfig($db), $options, $type));
             if ($obj !== false) {
                 $objs[$key] = $obj;
             }
@@ -72,13 +71,12 @@ class Factory {
      *
      * @throws \PDOException
      */
-    public static function build(array $config) {
-
-        $obj = new \PDO(
-            $config["dsn"],
-            $config["user"],
-            $config["pass"],
-            $config["options"]
+    public static function build(array $config): PDO {
+        $obj = new PDO(
+            $config['dsn'],
+            $config['user'],
+            $config['pass'],
+            $config['options']
         );
 
         return $obj;
@@ -96,65 +94,62 @@ class Factory {
      * @throws \LogicException
      * @throws \UnexpectedValueException
      */
-    public static function load_config(array $config, array $options = null, string $type = null) {
-
-        if (empty($config["server"]) && empty($config["dsn"])) {
-            throw new \LogicException("Either `server` or `dsn` is required", 3);
-        } elseif (!empty($config["server"])) {
-            $config["server"] = explode(",", $config["server"]);
+    public static function loadConfig(array $config, array $options = null, string $type = null): array {
+        if (empty($config['server']) && empty($config['dsn'])) {
+            throw new \LogicException('Either `server` or `dsn` is required', 3);
+        } elseif (!empty($config['server'])) {
+            $config['server'] = explode(',', $config['server']);
         }
 
         // set type to the passed in value, what is in the config, or mysql
-        $config["type"] = $type ?? $config["type"] ?? "mysql";
+        $config['type'] = $type ?? $config['type'] ?? 'mysql';
 
-        if (!empty($config["options"])) {
-            $config["options"] = json_decode($config["options"], true);
-            $err = json_last_error();
+        if (!empty($config['options'])) {
+            $config['options'] = json_decode($config['options'], true);
+            $err               = json_last_error();
             if ($err !== JSON_ERROR_NONE) {
-                throw new \UnexpectedValueException("Invalid value for options", 4);
+                throw new \UnexpectedValueException('Invalid value for options', 4);
             }
         } else {
-            $config["options"] = [];
+            $config['options'] = [];
         }
 
         if (!empty($options)) {
-            $config["options"] = $config["options"] + $options;
+            $config['options'] = $config['options'] + $options;
         }
 
         $obj = false;
 
-
-        switch ($config["type"]) {
-            case "mysql":
-            case "pgsql":
-                if (empty($config["db"])) {
-                    throw new \UnexpectedValueException("A database name is required for `{$config["type"]}` connections", 5);
+        switch ($config['type']) {
+            case 'mysql':
+            case 'pgsql':
+                if (empty($config['db'])) {
+                    throw new \UnexpectedValueException("A database name is required for `{$config['type']}` connections", 5);
                 }
-                $servers = $config["server"];
+                $servers = $config['server'];
                 shuffle($servers);
-                $server = array_shift($servers);
-                $config["dsn"] = "{$config["type"]}:host={$server};".
-                            "port={$config["port"]};".
-                            "dbname={$config["db"]}";
+                $server        = array_shift($servers);
+                $config['dsn'] = "{$config['type']}:host={$server};" .
+                            "port={$config['port']};" .
+                            "dbname={$config['db']}";
 
-                if (empty($config["charset"]) && $config["type"] == "mysql") {
-                    $config["charset"] = "utf8mb4";
+                if (empty($config['charset']) && $config['type'] == 'mysql') {
+                    $config['charset'] = 'utf8mb4';
                 }
 
-                if (!empty($config["charset"])) {
-                    $config["dsn"].= ";charset{$config["charset"]}";
+                if (!empty($config['charset'])) {
+                    $config['dsn'] .= ";charset{$config['charset']}";
                 }
                 break;
-            case "pdo":
-                if (empty($config["dsn"])) {
-                    throw new \UnexpectedValueException("A DSN is required for PDO connections", 1);
+            case 'pdo':
+                if (empty($config['dsn'])) {
+                    throw new \UnexpectedValueException('A DSN is required for PDO connections', 1);
                 }
                 break;
             default:
-                throw new \UnexpectedValueException("Invalid database type `{$config["type"]}`", 2);
+                throw new \UnexpectedValueException("Invalid database type `{$config['type']}`", 2);
                 break;
         }
-
 
         return $config;
     }
@@ -168,39 +163,34 @@ class Factory {
      * @return array
      * @throws \LogicException
      */
-    public static function get_config(string $db, GetConfig $cfg = null) {
-
+    public static function getConfig(string $db, GetConfig $cfg = null): array {
         if (empty($cfg)) {
             $cfg = new GetConfig();
         }
 
         // Check for an altername environment for this db
-        $prefix = $cfg->get("db.factory.prefix");
+        $prefix = $cfg->get('db.factory.prefix');
         if (empty($prefix)) {
             $prefix = self::CONFIG_PREFIX;
         }
 
-        if (!empty($prefix)) {
-            $prefix .= ".";
-        }
-
-        $config = array(
-            "type"        => $cfg->get($prefix . "$db.type"),
-            "db"          => $cfg->get($prefix . "$db.db"),
-            "user"        => $cfg->get($prefix . "$db.user"),
-            "pass"        => $cfg->get($prefix . "$db.pass"),
+        $config = [
+            'type'        => $cfg->get($prefix . ".$db.type"),
+            'db'          => $cfg->get($prefix . ".$db.db"),
+            'user'        => $cfg->get($prefix . ".$db.user"),
+            'pass'        => $cfg->get($prefix . ".$db.pass"),
             // PDO only
-            "dsn"         => $cfg->get($prefix . "$db.dsn"),
-            "options"     => $cfg->get($prefix . "$db.options"),
+            'dsn'         => $cfg->get($prefix . ".$db.dsn"),
+            'options'     => $cfg->get($prefix . ".$db.options"),
             // pgsql and mysql only
-            "server"      => $cfg->get($prefix . "$db.server"),
-            "port"        => $cfg->get($prefix . "$db.port"),
+            'server'      => $cfg->get($prefix . ".$db.server"),
+            'port'        => $cfg->get($prefix . ".$db.port"),
             // mysql only
-            "charset"     => $cfg->get($prefix . "$db.charset"),
-        );
+            'charset'     => $cfg->get($prefix . ".$db.charset"),
+        ];
 
-        if (empty($config["db"])) {
-            $config["db"] = $db;
+        if (empty($config['db'])) {
+            $config['db'] = $db;
         }
 
         return $config;

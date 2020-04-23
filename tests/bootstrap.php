@@ -11,17 +11,17 @@ function _debug() {
     fwrite(STDERR, "###########\n");
     $args = func_get_args();
     foreach ($args as $arg) {
-        fwrite(STDERR, trim(var_export($arg, true))."\n");
+        fwrite(STDERR, trim(var_export($arg, true)) . "\n");
     }
     fwrite(STDERR, "###########\n");
     fwrite(STDERR, "END DEBUG\n\n");
 }
 
-define("TEST_DB_FILE", __DIR__."/fixtures/test_copy.db");
+define('TEST_DB_FILE', __DIR__ . '/fixtures/test_copy.db');
 
 function _startup() {
-    copy(__DIR__."/fixtures/test.db", TEST_DB_FILE);
-    register_shutdown_function("_shutdown");
+    copy(__DIR__ . '/fixtures/test.db', TEST_DB_FILE);
+    register_shutdown_function('_shutdown');
 }
 
 function _shutdown() {
@@ -33,3 +33,52 @@ function _shutdown() {
 
 _startup();
 
+// Check if we are running inside a docker container already
+// If so, set the env vars correctly and don't run setup/teardown
+if (file_exists('/.dockerenv')) {
+    $mysql_host = 'db-mysql-sandbox';
+    $mysql_port = 3306;
+    $pgsql_host = 'db-pgsql-sandbox';
+    $pgsql_port = 5432;
+} else {
+    /* Start daemons for testing. */
+    passthru(__DIR__ . '/setup.sh');
+
+    register_shutdown_function(function () {
+        passthru(__DIR__."/teardown.sh");
+    });
+
+    $mysql_host = '127.0.0.1';
+    $mysql_port = 43306;
+    $pgsql_host = '127.0.0.1';
+    $pgsql_port = 55432;
+}
+
+// Setup config variables
+putenv('DEALNEWS_DB_CHINOOK_TYPE=pdo');
+putenv('DEALNEWS_DB_CHINOOK_DSN=sqlite:tests/chinook.db');
+
+putenv('DEALNEWS_DB_TESTDB_TYPE=pdo');
+putenv('DEALNEWS_DB_TESTDB_DSN=sqlite:tests/fixtures/test_copy.db');
+
+putenv('DEALNEWS_DB_MYPDOTESTDB_TYPE=pdo');
+putenv("DEALNEWS_DB_MYPDOTESTDB_DSN=mysql:host={$mysql_host};port={$mysql_port};dbname=mytestdb");
+putenv('DEALNEWS_DB_MYPDOTESTDB_USER=test');
+putenv('DEALNEWS_DB_MYPDOTESTDB_PASS=test');
+
+putenv('DEALNEWS_DB_MYTESTDB_TYPE=mysql');
+putenv("DEALNEWS_DB_MYTESTDB_SERVER={$mysql_host}");
+putenv("DEALNEWS_DB_MYTESTDB_PORT={$mysql_port}");
+putenv('DEALNEWS_DB_MYTESTDB_USER=test');
+putenv('DEALNEWS_DB_MYTESTDB_PASS=test');
+
+putenv('DEALNEWS_DB_PGPDOTESTDB_TYPE=pdo');
+putenv("DEALNEWS_DB_PGPDOTESTDB_DSN=pgsql:host={$pgsql_host};port={$pgsql_port};dbname=pgtestdb");
+putenv('DEALNEWS_DB_PGPDOTESTDB_USER=test');
+putenv('DEALNEWS_DB_PGPDOTESTDB_PASS=test');
+
+putenv('DEALNEWS_DB_PGTESTDB_TYPE=pgsql');
+putenv("DEALNEWS_DB_PGTESTDB_SERVER={$pgsql_host}");
+putenv("DEALNEWS_DB_PGTESTDB_PORT={$pgsql_port}");
+putenv('DEALNEWS_DB_PGTESTDB_USER=test');
+putenv('DEALNEWS_DB_PGTESTDB_PASS=test');

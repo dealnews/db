@@ -2,8 +2,6 @@
 
 namespace DealNews\DB;
 
-use \DealNews\DB\CRUD;
-
 /**
  * Maps an object to a database accesible via PDO
  *
@@ -16,17 +14,17 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     /**
      * Database configuration name
      */
-    public const DATABASE_NAME = "";
+    public const DATABASE_NAME = '';
 
     /**
      * Table name
      */
-    public const TABLE = "";
+    public const TABLE = '';
 
     /**
      * Table primary key column name
      */
-    public const PRIMARY_KEY = "";
+    public const PRIMARY_KEY = '';
 
     /**
      * Sequence name for DBMS that use sequences
@@ -36,12 +34,12 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     /**
      * Value sent to get_column_name to indicate data is being read
      */
-    public const MODE_READ  = "READ";
+    public const MODE_READ  = 'READ';
 
     /**
      * Value sent to get_column_name to indicate data is being written
      */
-    public const MODE_WRITE = "WRITE";
+    public const MODE_WRITE = 'WRITE';
 
     /**
      * Primititve types
@@ -57,7 +55,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     /**
      * Name of the class the mapper is mapping
      */
-    public const MAPPED_CLASS = "";
+    public const MAPPED_CLASS = '';
 
     /**
      * Defines the properties that are mapped and any
@@ -76,13 +74,12 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @param \DealNews\DB\CRUD|null $crud Optional CRUD object
      */
     public function __construct(CRUD $crud = null) {
-
         if ($crud !== null) {
             $this->crud = $crud;
         } elseif (!empty($this::DATABASE_NAME)) {
             $this->crud = new CRUD(\DealNews\DB\Factory::init($this::DATABASE_NAME));
         } else {
-            throw new \LogicException("No database configuration for ".get_class($this));
+            throw new \LogicException('No database configuration for ' . get_class($this));
         }
     }
 
@@ -110,7 +107,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @return boolean|array
      * @throws \Error
      */
-    public function load_multi(array $ids) {
+    public function loadMulti(array $ids) {
         return $this->find([$this::PRIMARY_KEY => $ids]);
     }
 
@@ -129,9 +126,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
         if (!empty($data)) {
             foreach ($data as $row) {
-                $object = $this->set_data($row);
-                $object = $this->load_relations($object);
-                $objects[$this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY])] = $object;
+                $object = $this->setData($row);
+                $object = $this->loadRelations($object);
+
+                $objects[$this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY])] = $object;
             }
         }
 
@@ -144,8 +142,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @throws \Error
      */
     public function save($object) {
-
-        $data = $this->get_data($object);
+        $data = $this->getData($object);
 
         if (array_key_exists($this::PRIMARY_KEY, $data)) {
             unset($data[$this::PRIMARY_KEY]);
@@ -158,10 +155,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         }
 
         try {
-            if ($this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]) == 0) {
+            if ($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]) == 0) {
                 $success = $this->crud->create($this::TABLE, $data);
                 if ($success) {
-                    $this->set_value(
+                    $this->setValue(
                         $object,
                         $this::PRIMARY_KEY,
                         [$this::PRIMARY_KEY => $this->crud->pdo->lastInsertId($this::SEQUENCE_NAME)],
@@ -173,28 +170,28 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                     $this::TABLE,
                     $data,
                     [
-                        $this::PRIMARY_KEY => $object->{$this::PRIMARY_KEY}
+                        $this::PRIMARY_KEY => $object->{$this::PRIMARY_KEY},
                     ]
                 );
             }
 
             if ($success) {
+                $object = $this->saveRelations($object);
+                $object = $this->load($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
+            }
+        } catch (\PDOException $e) {
+            if (!$already_in_transaction) {
+                $this->crud->pdo->rollBack();
+            }
+            throw $e;
+        }
 
-                $object = $this->save_relations($object);
-
-                $object = $this->load($this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
-
-                if (!$already_in_transaction) {
-                    $this->crud->pdo->commit();
-                }
-
+        if (!$already_in_transaction) {
+            if ($success) {
+                $this->crud->pdo->commit();
             } else {
                 $this->crud->pdo->rollBack();
             }
-
-        } catch (\PDOException $e) {
-            $this->crud->pdo->rollBack();
-            throw $e;
         }
 
         return $object;
@@ -209,9 +206,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $success = $this->crud->delete(
             $this::TABLE,
             [
-                $this::PRIMARY_KEY => $id
+                $this::PRIMARY_KEY => $id,
             ]
         );
+
         return $success;
     }
 
@@ -220,24 +218,24 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @param  object $object Object to which to add the relations
      * @return object
      */
-    protected function load_relations($object) {
+    protected function loadRelations($object) {
         foreach ($this::MAPPING as $property => $mapping) {
-            if (!empty($mapping["mapper"]) && !empty($mapping["lookup"])) {
+            if (!empty($mapping['mapper']) && !empty($mapping['lookup'])) {
                 $objects = [];
-                $rows = $this->crud->read(
-                    $mapping["lookup"]["table"],
+                $rows    = $this->crud->read(
+                    $mapping['lookup']['table'],
                     [
-                        $mapping["lookup"]["foreign_column"] => $object->{$this::PRIMARY_KEY}
+                        $mapping['lookup']['foreign_column'] => $object->{$this::PRIMARY_KEY},
                     ]
                 );
 
                 if (!empty($rows)) {
-                    $mapper = new $mapping["mapper"]();
+                    $mapper = new $mapping['mapper']();
                     foreach ($rows as $row) {
-                        $objects[] = $mapper->load($row[$mapping["lookup"]["mapper_column"]]);
+                        $objects[] = $mapper->load($row[$mapping['lookup']['mapper_column']]);
                     }
                 }
-                $this->set_value(
+                $this->setValue(
                     $object,
                     $property,
                     [$property => $objects],
@@ -245,6 +243,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 );
             }
         }
+
         return $object;
     }
 
@@ -254,32 +253,32 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @param  object $object Object containing the relations
      * @return object
      */
-    protected function save_relations($object) {
+    protected function saveRelations($object) {
         foreach ($this::MAPPING as $property => $mapping) {
-            if (!empty($mapping["mapper"]) && !empty($mapping["lookup"])) {
+            if (!empty($mapping['mapper']) && !empty($mapping['lookup'])) {
 
                 // load values in the lookup table
                 $rows = $this->crud->read(
-                    $mapping["lookup"]["table"],
+                    $mapping['lookup']['table'],
                     [
-                        $mapping["lookup"]["foreign_column"] => $this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY])
+                        $mapping['lookup']['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
                     ]
                 );
 
                 // save current object values
-                $mapper = new $mapping["mapper"]();
+                $mapper = new $mapping['mapper']();
 
-                $objects = $this->get_value($object, $property, $mapping);
+                $objects = $this->getValue($object, $property, $mapping);
 
                 foreach ($objects as $key => $obj) {
                     $objects[$key] = $mapper->save($obj);
                 }
 
-                $this->set_value(
+                $this->setValue(
                     $object,
                     $property,
                     [
-                        $property => $objects
+                        $property => $objects,
                     ],
                     $mapping
                 );
@@ -289,7 +288,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 foreach ($objects as $obj) {
                     $found = false;
                     foreach ($rows as $key => $row) {
-                        if ($row[$mapping["lookup"]["mapper_column"]] == $obj->{$mapper::PRIMARY_KEY}) {
+                        if ($row[$mapping['lookup']['mapper_column']] == $obj->{$mapper::PRIMARY_KEY}) {
                             // found a match. remove it from the db rows
                             $found = true;
                             unset($rows[$key]);
@@ -306,12 +305,12 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                     // delete lookup rows that are no longer needed
                     $pk_values = [];
                     foreach ($rows as $row) {
-                        $pk_values[] = $row[$mapping["lookup"]["primary_key"]];
+                        $pk_values[] = $row[$mapping['lookup']['primary_key']];
                     }
                     $this->crud->delete(
-                        $mapping["lookup"]["table"],
+                        $mapping['lookup']['table'],
                         [
-                            $mapping["lookup"]["primary_key"] => $pk_values
+                            $mapping['lookup']['primary_key'] => $pk_values,
                         ]
                     );
                 }
@@ -320,10 +319,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                     // add new relational data
                     foreach ($add as $obj) {
                         $this->crud->create(
-                            $mapping["lookup"]["table"],
+                            $mapping['lookup']['table'],
                             [
-                                $mapping["lookup"]["mapper_column"]  => $obj->{$mapper::PRIMARY_KEY},
-                                $mapping["lookup"]["foreign_column"] => $this->get_value($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
+                                $mapping['lookup']['mapper_column']  => $obj->{$mapper::PRIMARY_KEY},
+                                $mapping['lookup']['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
                             ]
                         );
                     }
@@ -343,13 +342,14 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      *
      * @return array
      */
-    protected function get_data($object) {
-        $data = array();
+    protected function getData($object) {
+        $data = [];
         foreach ($this::MAPPING as $property => $mapping) {
-            if (empty($mapping["mapper"])) {
-                $data[$property] = $this->get_value($object, $property, $mapping);
+            if (empty($mapping['mapper'])) {
+                $data[$property] = $this->getValue($object, $property, $mapping);
             }
         }
+
         return $data;
     }
 }

@@ -9,7 +9,6 @@ namespace DealNews\DB\Tests\TestClasses;
  * @copyright   1997-Present DealNews.com, Inc
  * @package     RBAC Web
  */
-
 class Student {
 
     /**
@@ -24,7 +23,7 @@ class Student {
      *
      * @var string
      */
-    public $name = "";
+    public $name = '';
 
     /**
      * Test Course set

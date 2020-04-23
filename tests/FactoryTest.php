@@ -12,22 +12,12 @@
 namespace DealNews\DB\Tests;
 
 use \DealNews\DB\Factory;
+use \DealNews\DB\PDO;
 
 class FactoryTest extends \PHPUnit\Framework\TestCase {
-
-    protected static $containers = [
-        "mysql" => [
-            "name"    => "dealnews-db-mysql-test-instance",
-            "run"     => __DIR__."/run_mysql.sh",
-            "started" => false,
-        ],
-        "postgres" => [
-            "name"    => "dealnews-db-postgres-test-instance",
-            "run"     => __DIR__."/run_pgsql.sh",
-            "started" => false,
-        ],
-    ];
-
+    /**
+     * @group unit
+     */
     public function testGetConfigEmptyDB() {
         $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
                    ->setMethods(['get'])
@@ -37,22 +27,22 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            ['test.type',    'type'],
-            ['test.db',       null],
-            ['test.user',    'user'],
-            ['test.pass',    'pass'],
-            ['test.dsn',     'dsn'],
-            ['test.options', 'options'],
-            ['test.server',  'server'],
-            ['test.port',    'port'],
-            ['test.charset', 'charset'],
+            [Factory::CONFIG_PREFIX . '.test.type',    'type'],
+            [Factory::CONFIG_PREFIX . '.test.db',       null],
+            [Factory::CONFIG_PREFIX . '.test.user',    'user'],
+            [Factory::CONFIG_PREFIX . '.test.pass',    'pass'],
+            [Factory::CONFIG_PREFIX . '.test.dsn',     'dsn'],
+            [Factory::CONFIG_PREFIX . '.test.options', 'options'],
+            [Factory::CONFIG_PREFIX . '.test.server',  'server'],
+            [Factory::CONFIG_PREFIX . '.test.port',    'port'],
+            [Factory::CONFIG_PREFIX . '.test.charset', 'charset'],
         ];
 
         // Configure the stub.
         $gc->method('get')
              ->will($this->returnValueMap($map));
 
-        $config = Factory::get_config("test", $gc);
+        $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
             [
                 'type'    => 'type',
@@ -69,6 +59,9 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
+    /**
+     * @group unit
+     */
     public function testGetConfigDefaultPrefix() {
         $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
                    ->setMethods(['get'])
@@ -78,22 +71,22 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            ['test.type',    'type'],
-            ['test.db',      'db'],
-            ['test.user',    'user'],
-            ['test.pass',    'pass'],
-            ['test.dsn',     'dsn'],
-            ['test.options', 'options'],
-            ['test.server',  'server'],
-            ['test.port',    'port'],
-            ['test.charset', 'charset'],
+            [Factory::CONFIG_PREFIX . '.test.type',    'type'],
+            [Factory::CONFIG_PREFIX . '.test.db',      'db'],
+            [Factory::CONFIG_PREFIX . '.test.user',    'user'],
+            [Factory::CONFIG_PREFIX . '.test.pass',    'pass'],
+            [Factory::CONFIG_PREFIX . '.test.dsn',     'dsn'],
+            [Factory::CONFIG_PREFIX . '.test.options', 'options'],
+            [Factory::CONFIG_PREFIX . '.test.server',  'server'],
+            [Factory::CONFIG_PREFIX . '.test.port',    'port'],
+            [Factory::CONFIG_PREFIX . '.test.charset', 'charset'],
         ];
 
         // Configure the stub.
         $gc->method('get')
              ->will($this->returnValueMap($map));
 
-        $config = Factory::get_config("test", $gc);
+        $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
             [
                 'type'    => 'type',
@@ -110,6 +103,9 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
+    /**
+     * @group unit
+     */
     public function testGetConfigCustomPrefix() {
         $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
                    ->setMethods(['get'])
@@ -134,7 +130,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         $gc->method('get')
              ->will($this->returnValueMap($map));
 
-        $config = Factory::get_config("test", $gc);
+        $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
             [
                 'type'    => 'type',
@@ -152,10 +148,11 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
     }
 
     /**
+     * @group unit
      * @dataProvider loadConfigData
      */
     public function testLoadConfig($config, $options, $type, $expect) {
-        $config = Factory::load_config($config, $options, $type);
+        $config = Factory::loadConfig($config, $options, $type);
         $this->assertEquals(
             $expect,
             $config
@@ -168,14 +165,14 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
             [
                 [
                         'type'    => 'pdo',
-                    'db'      => null,
-                    'user'    => 'user',
-                    'pass'    => 'pass',
-                    'dsn'     => 'dsn',
-                    'options' => null,
-                    'server'  => null,
-                    'port'    => null,
-                    'charset' => null,
+                    'db'          => null,
+                    'user'        => 'user',
+                    'pass'        => 'pass',
+                    'dsn'         => 'dsn',
+                    'options'     => null,
+                    'server'      => null,
+                    'port'        => null,
+                    'charset'     => null,
                 ],
                 [],
                 null,
@@ -204,7 +201,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'port'    => null,
                     'charset' => null,
                 ],
-                [4=>4,5=>5,6=>6],
+                [4=> 4, 5=>5, 6=>6],
                 null,
                 [
                     'type'    => 'pdo',
@@ -212,7 +209,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'user'    => 'user',
                     'pass'    => 'pass',
                     'dsn'     => 'dsn',
-                    'options' => [1=>1,2=>2,3=>3,4=>4,5=>5,6=>6],
+                    'options' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
                     'server'  => null,
                     'port'    => null,
                     'charset' => null,
@@ -257,7 +254,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'charset' => null,
                 ],
                 [],
-                "pgsql",
+                'pgsql',
                 [
                     'type'    => 'pgsql',
                     'db'      => 'test',
@@ -269,7 +266,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'port'    => null,
                     'charset' => null,
                 ],
-            ]
+            ],
         ];
     }
 
@@ -277,60 +274,46 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group integration
      */
     public function testInit() {
-
         $drivers = \PDO::getAvailableDrivers();
 
-        if (!in_array("sqlite", $drivers)) {
-            $this->markTestSkipped("PDO SQLite Driver not installed");
+        if (!in_array('sqlite', $drivers)) {
+           $this->markTestSkipped('PDO SQLite Driver not installed');
         }
 
-        $db1 = Factory::init("testdb");
-        $db2 = Factory::init("testdb");
+        $db1 = Factory::init('chinook');
+        $db2 = Factory::init('chinook');
 
         $this->assertSame($db1, $db2);
     }
 
     /**
-     * @group functional
      * @dataProvider buildData
      */
-    public function testBuild($type, $container, $dbname, $fixture, $options = [], $expect = null) {
-
+    public function testBuild($type, $dbname, $fixture, $options = [], $expect = null) {
         $drivers = \PDO::getAvailableDrivers();
 
         if (!in_array($type, $drivers)) {
-            $this->markTestSkipped("PDO Driver `$type` not installed");
+           $this->markTestSkipped("PDO Driver `$type` not installed");
         }
 
-        if (!empty($container)) {
-            if (!$this->startContainer($container)) {
-                $this->markTestSkipped("docker not available");
-            }
-        }
-
-        $db = Factory::build(Factory::load_config(Factory::get_config($dbname), $options));
+        $db = Factory::build(Factory::loadConfig(Factory::getConfig($dbname), $options));
         $this->assertTrue(
-            $db instanceof \PDO,
-            "Are you running the docker container? See README."
+            $db instanceof PDO,
+            'Are you running the docker container? See README.'
         );
         $sth = $db->prepare(
-            file_get_contents(__DIR__."/fixtures/$fixture")
+            file_get_contents(__DIR__ . "/fixtures/$fixture")
         );
         $success = $sth->execute();
-        $err = $sth->errorInfo();
-        if (!empty($err[2])) {
-            $message = $err[2];
-        } else {
-            $message = "";
-        }
+        $err     = $sth->errorInfo();
         $this->assertTrue(
             $success,
-            $message
+            $err[2] ?? "Unknown Error"
         );
 
         if (!is_null($expect)) {
             $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
-            $this->assertEquals(
+           $this->assertEquals(
                 $expect,
                 $data
             );
@@ -340,180 +323,140 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
     public function buildData() {
         // $type, $container, $dbname, $fixture
         return [
-            [
-                "sqlite",
-                null,
-                "chinook",
-                "sqlite/select.sql",
+            'chinook' => [
+                'sqlite',
+                'chinook',
+                'sqlite/select.sql',
                 [],
                 [
                     [
-                        "count" => 347
-                    ]
-                ]
+                        'count' => 347,
+                    ],
+                ],
             ],
-            [
-                "pgsql",
-                "postgres",
-                "pgpdotestdb",
-                "pgsql/create_table.sql",
+            'pgpdotestdb' => [
+                'pgsql',
+                'pgpdotestdb',
+                'pgsql/create_table.sql',
             ],
-            [
-                "pgsql",
-                "postgres",
-                "pgtestdb",
-                "pgsql/create_table.sql",
+            'pgtestdb' => [
+                'pgsql',
+                'pgtestdb',
+                'pgsql/create_table.sql',
             ],
-            [
-                "mysql",
-                "mysql",
-                "mypdotestdb",
-                "mysql/create_table.sql",
+            'mypdotestdb' => [
+                'mysql',
+                'mypdotestdb',
+                'mysql/create_table.sql',
             ],
-            [
-                "mysql",
-                "mysql",
-                "mytestdb",
-                "mysql/create_table.sql",
+            'mytestdb' => [
+                'mysql',
+                'mytestdb',
+                'mysql/create_table.sql',
             ],
-            [
-                "mysql",
-                "mysql",
-                "mytestdb",
-                "mysql/show_variables.sql",
+            'mytestdb_show' => [
+                'mysql',
+                'mytestdb',
+                'mysql/show_variables.sql',
                 [
                     // 1002 = \PDO::MYSQL_ATTR_INIT_COMMAND
-                    1002 => "SET SESSION sql_mode='TRADITIONAL'"
+                    1002 => "SET SESSION sql_mode='TRADITIONAL'",
                 ],
                 [
                     [
-                        "Variable_name" => "sql_mode",
-                        "Value"         => "STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
-                    ]
-                ]
+                        'Variable_name' => 'sql_mode',
+                        'Value'         => 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION',
+                    ],
+                ],
             ],
         ];
     }
 
-
     /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionCode 1
+     * @group unit
      */
     public function testNoDSN() {
-        Factory::load_config(
+        $this->expectException("\UnexpectedValueException");
+        $this->expectExceptionCode(1);
+        Factory::loadConfig(
             [
-                "type"   => "pdo",
-                "server" => "127.0.0.1",
-                "user"   => "test",
-                "pass"   => "test",
+                'type'   => 'pdo',
+                'server' => '127.0.0.1',
+                'user'   => 'test',
+                'pass'   => 'test',
             ]
         );
     }
 
     /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionCode 2
+     * @group unit
      */
     public function testBadType() {
-        Factory::load_config(
+        $this->expectException("\UnexpectedValueException");
+        $this->expectExceptionCode(2);
+        Factory::loadConfig(
             [
-                "type"   => "mssql",
-                "server" => "127.0.0.1",
-                "port"   => "666",
-                "db"     => "NONONO",
-                "user"   => "test",
-                "pass"   => "test",
+                'type'   => 'mssql',
+                'server' => '127.0.0.1',
+                'port'   => '666',
+                'db'     => 'NONONO',
+                'user'   => 'test',
+                'pass'   => 'test',
             ]
         );
     }
 
     /**
-     * @expectedException \LogicException
-     * @expectedExceptionCode 3
+     * @group unit
      */
     public function testNoServer() {
-        Factory::load_config(
+        $this->expectException("\LogicException");
+        $this->expectExceptionCode(3);
+        Factory::loadConfig(
             [
-                "type"   => "mysql",
-                "port"   => "00000",
-                "db"     => "noserver",
-                "user"   => "test",
-                "pass"   => "test",
+                'type'   => 'mysql',
+                'port'   => '00000',
+                'db'     => 'noserver',
+                'user'   => 'test',
+                'pass'   => 'test',
             ]
         );
     }
 
     /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionCode 4
+     * @group unit
      */
     public function testBadOptions() {
-        Factory::load_config(
+        $this->expectException("\UnexpectedValueException");
+        $this->expectExceptionCode(4);
+        Factory::loadConfig(
             [
-                "type"    => "mysql",
-                "port"    => "00000",
-                "server"  => "noserver",
-                "db"      => "noserver",
-                "user"    => "test",
-                "pass"    => "test",
-                "options" => "['foo':1,2,3]",
+                'type'    => 'mysql',
+                'port'    => '00000',
+                'server'  => 'noserver',
+                'db'      => 'noserver',
+                'user'    => 'test',
+                'pass'    => 'test',
+                'options' => "['foo':1,2,3]",
             ]
         );
     }
 
     /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionCode 5
+     * @group unit
      */
     public function testNoDB() {
-        Factory::load_config(
+        $this->expectException("\UnexpectedValueException");
+        $this->expectExceptionCode(5);
+        Factory::loadConfig(
             [
-                "type"    => "mysql",
-                "port"    => "00000",
-                "server"  => "noserver",
-                "user"    => "test",
-                "pass"    => "test",
-                "options" => null,
+                'type'    => 'mysql',
+                'port'    => '00000',
+                'server'  => 'noserver',
+                'user'    => 'test',
+                'pass'    => 'test',
+                'options' => null,
             ]
         );
-    }
-
-    protected function startContainer($name) {
-
-        $docker_prog = trim(`which docker`);
-        if (!empty($docker_prog)) {
-            if (isset(self::$containers[$name])) {
-                $container = self::$containers[$name];
-                $container_name = "dealnews-db-{$container["name"]}-test-instance";
-                $running_container = strlen(trim(`docker ps | fgrep {$container["name"]}`)) > 0;
-                if (!$running_container) {
-                    $has_container = strlen(trim(`docker ps --all | fgrep {$container["name"]}`)) > 0;
-                    if (!$has_container) {
-                        fwrite(STDERR, "\nRunning $name\n");
-                        passthru($container["run"]);
-                    } else {
-                        fwrite(STDERR, "\nStarting $name\n");
-                        passthru("docker start {$container["name"]}");
-                    }
-                    self::$containers[$name]["started"] = true;
-                    // let the container start up
-                    sleep(10);
-                    register_shutdown_function(["\DealNews\DB\Tests\FactoryTest", "stopContainers"]);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static function stopContainers() {
-        foreach (self::$containers as $name => $container) {
-            if (!empty($container["started"])) {
-                fwrite(STDERR, "Stopping $name\n");
-                passthru("docker stop {$container["name"]}");
-                self::$containers[$name]["started"] = false;
-            }
-        }
     }
 }

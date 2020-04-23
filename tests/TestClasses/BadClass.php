@@ -16,7 +16,7 @@ class BadClass {
      *
      * @var string
      */
-    public $name = "";
+    public $name = '';
 
-    public $bad_field = "";
+    public $bad_field = '';
 }

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-docker run -d -p 33306:3306 \
-    --name dealnews-db-mysql-test-instance \
+docker run -d -p 43306:3306 \
+    --name db-mysql-sandbox \
+    --network dealnews \
     -e MYSQL_ROOT_PASSWORD=percona-root \
     -e MYSQL_DATABASE=mytestdb \
     -e MYSQL_USER=test \

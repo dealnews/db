@@ -9,7 +9,6 @@ namespace DealNews\DB\Tests\TestClasses;
  * @copyright   1997-Present DealNews.com, Inc
  * @package     DataMapper
  */
-
 class Course {
 
     /**
@@ -24,5 +23,5 @@ class Course {
      *
      * @var string
      */
-    public $name = "";
+    public $name = '';
 }

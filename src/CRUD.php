@@ -15,16 +15,16 @@ class CRUD {
 
     /**
      * PDO Object
-     * @var \PDO
+     * @var \DealNews\DB\PDO
      */
     protected $pdo;
 
     /**
      * Creates a new CRUD object
      *
-     * @param \PDO $pdo PDO object
+     * @param \DealNews\DB\PDO $pdo PDO object
      */
-    public function __construct(\PDO $pdo) {
+    public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     }
@@ -36,10 +36,10 @@ class CRUD {
      * @return \PDO
      */
     public function __get($var) {
-        if ($var == "pdo") {
+        if ($var == 'pdo') {
             return $this->pdo;
         } else {
-            throw new \LogicException("Invalid property $var for ".get_class($this));
+            throw new \LogicException("Invalid property $var for " . get_class($this));
         }
     }
 
@@ -51,8 +51,7 @@ class CRUD {
      * @return bool
      * @throws \PDOException
      */
-    public function create(string $table, array $data) {
-
+    public function create(string $table, array $data): bool {
         $params = [];
 
         foreach ($data as $key => $value) {
@@ -63,10 +62,10 @@ class CRUD {
         }
 
         $this->run(
-            "INSERT INTO ".$table."
-                    (".implode(", ", array_keys($data)).")
+            'INSERT INTO ' . $table . '
+                    (' . implode(', ', array_keys($data)) . ')
                     VALUES
-                    (:".implode(", :", array_keys($data)).")",
+                    (:' . implode(', :', array_keys($data)) . ')',
             $params
         );
 
@@ -76,39 +75,24 @@ class CRUD {
     /**
      * Reads row from a table
      *
-     * @param  string $table  Table name
-     * @param  array  $data   Fields and values to use in the where clause
-     * @param  array  $fields List of fields to return
-     * @return array
+     * @param      string  $table   The table name
+     * @param      array   $data    Fields and values to use in the where clause
+     * @param      int     $limit   Number of rows to return
+     * @param      int     $start   Row to start at
+     * @param      array   $fields  List of fields to return
+     * @param      string  $order   Order by clause
+     *
+     * @return     array
      * @throws \PDOException
      */
-    public function read(string $table, array $data, int $limit = null, int $start = null, array $fields = ["*"]) {
-
+    public function read(string $table, array $data = [], int $limit = null, int $start = null, array $fields = ['*'], string $order = ""): array {
         $row = [];
 
-        $query = "SELECT ".implode(", ", $fields)." FROM ".$table;
-        if (!empty($data)) {
-            $query.= " WHERE ".$this->build_where_clause($data);
-        }
-
-        if (!empty($limit)) {
-            if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) == "pgsql") {
-                $query.= " LIMIT ".((int)$limit);
-                if (!empty($start)) {
-                    $query.= " OFFSET ".((int)$start);
-                }
-            } else {
-                $query.= " LIMIT";
-                if (!empty($start)) {
-                    $query.= " ".((int)$start).",";
-                }
-                $query.= " ".((int)$limit);
-            }
-        }
+        $query = $this->buildSelectQuery($table, $data, $limit, $start, $fields, $order);
 
         $sth = $this->run(
             $query,
-            $this->build_parameters($data)
+            $this->buildParameters($data)
         );
 
         if ($sth) {
@@ -130,14 +114,14 @@ class CRUD {
      * @return bool
      * @throws \PDOException
      */
-    public function update(string $table, array $data, array $where) {
+    public function update(string $table, array $data, array $where): bool {
         $this->run(
-            "UPDATE ".$table." SET ".
-            $this->build_update_clause($data)." ".
-            "WHERE ".$this->build_where_clause($where),
+            'UPDATE ' . $table . ' SET ' .
+            $this->buildUpdateClause($data) . ' ' .
+            'WHERE ' . $this->buildWhereClause($where),
             array_merge(
-                $this->build_parameters($data),
-                $this->build_parameters($where)
+                $this->buildParameters($data),
+                $this->buildParameters($where)
             )
         );
 
@@ -151,10 +135,10 @@ class CRUD {
      * @return bool
      * @throws \PDOException
      */
-    public function delete(string $table, array $data) {
+    public function delete(string $table, array $data): bool {
         $this->run(
-            "DELETE FROM ".$table." WHERE ".$this->build_where_clause($data),
-            $this->build_parameters($data)
+            'DELETE FROM ' . $table . ' WHERE ' . $this->buildWhereClause($data),
+            $this->buildParameters($data)
         );
 
         return true;
@@ -164,19 +148,13 @@ class CRUD {
      * Prepares a query, executes it and returns the \PDOStatement
      * @param  string $query  Query to execute
      * @param  array  $params List of fields and values to bind to the query
-     * @return \PDOStatement
+     * @return PDOStatement
      * @throws \PDOException
      */
-    public function run(string $query, array $params = []) {
-
+    public function run(string $query, array $params = []): PDOStatement {
         $sth = $this->pdo->prepare($query);
 
         $success = $sth->execute($params);
-
-        if (!$success) {
-            $err = $sth->errorInfo();
-            throw new \PDOException($err[2], $err[0]);
-        }
 
         return $sth;
     }
@@ -188,10 +166,10 @@ class CRUD {
      * @param  int|integer $depth  Depth passed along during recursion
      * @return array
      */
-    public function build_parameters(array $fields, int $depth = 0) {
+    public function buildParameters(array $fields, int $depth = 0): array {
         $parameters = [];
         foreach ($fields as $field => $value) {
-            if (!is_numeric($field) && $field != "OR" && $field != "AND") {
+            if (!is_numeric($field) && $field != 'OR' && $field != 'AND') {
                 if (is_array($value)) {
                     foreach ($value as $key => $val) {
                         $parameters[":{$field}{$key}{$depth}"] = $val;
@@ -200,16 +178,17 @@ class CRUD {
                     $parameters[":{$field}{$depth}"] = $value;
                 }
             } elseif (is_array($value)) {
-                if (count($fields) > 1 && ($field === "OR" || $field === "AND")) {
-                    throw new \LogicException("Only one value allowed when AND/OR specified");
+                if (count($fields) > 1 && ($field === 'OR' || $field === 'AND')) {
+                    throw new \LogicException('Only one value allowed when AND/OR specified');
                 }
                 $depth++;
                 $parameters = array_merge(
                     $parameters,
-                    $this->build_parameters($value, $depth)
+                    $this->buildParameters($value, $depth)
                 );
             }
         }
+
         return $parameters;
     }
 
@@ -219,16 +198,15 @@ class CRUD {
      *
      * @param  array  $fields      Array of fields and values
      * @param  string $conjunction Join string for the field list
-     * @return array               An array containing `fields` and `parameters`
+     * @return string
      */
-    public function build_where_clause(array $fields, int $depth = 0) {
-
-        $conjunction = "AND";
+    public function buildWhereClause(array $fields, int $depth = 0): string {
+        $conjunction = 'AND';
         $clauses     = [];
 
-        if (isset($fields["OR"]) || isset($fields["AND"])) {
+        if (isset($fields['OR']) || isset($fields['AND'])) {
             if (count($fields) > 1) {
-                throw new \LogicException("Only one value allowed when AND/OR specified");
+                throw new \LogicException('Only one value allowed when AND/OR specified');
             }
             $conjunction = key($fields);
             $fields      = current($fields);
@@ -245,22 +223,22 @@ class CRUD {
                         $field_clauses[] = "$field = :{$field}{$key}{$depth}";
                     }
                     if (count($field_clauses) > 1) {
-                        $clauses[] = "(".implode(" OR ", $field_clauses).")";
+                        $clauses[] = '(' . implode(' OR ', $field_clauses) . ')';
                     } else {
                         $clauses[] = reset($field_clauses);
                     }
                 } else {
-                    throw new \InvalidArgumentException("Invalid field value ".gettype($value), 1);
+                    throw new \InvalidArgumentException('Invalid field value ' . gettype($value), 1);
                 }
             } elseif (is_array($value)) {
                 $depth++;
-                $clauses[] = $this->build_where_clause($value, $depth);
+                $clauses[] = $this->buildWhereClause($value, $depth);
             }
         }
 
-        $where = "";
+        $where = '';
         if (!empty($clauses)) {
-            $where = "(".implode(" $conjunction ", $clauses).")";
+            $where = '(' . implode(" $conjunction ", $clauses) . ')';
         }
 
         return $where;
@@ -272,17 +250,60 @@ class CRUD {
      * @param  array  $fields      Array of fields and values
      * @return string
      */
-    public function build_update_clause(array $fields) {
+    public function buildUpdateClause(array $fields): string {
         $clauses = [];
         foreach ($fields as $field => $value) {
             if (is_numeric($field)) {
-                throw new \LogicException("Invalid field name $field for update clause.");
+                throw new \LogicException("Invalid field name $field for update clause.", 1);
             }
-            if (!is_scalar($field) && !is_null($field)) {
-                throw new \LogicException("Invalid value for $field in update.");
+            if (empty($field)) {
+                throw new \LogicException("Invalid value for $field in update.", 2);
             }
             $clauses[] = "$field = :{$field}0";
         }
-        return implode(", ", $clauses);
+
+        return implode(', ', $clauses);
+    }
+
+    /**
+     * Builds a select query.
+     *
+     * @param      string  $table   The table
+     * @param      array   $data    The data
+     * @param      int     $limit   The limit
+     * @param      int     $start   The start
+     * @param      array   $fields  The fields
+     * @param      string  $order   The order
+     *
+     * @return     string  The select query.
+     */
+    public function buildSelectQuery(string $table, array $data = [], int $limit = null, int $start = null, array $fields = ['*'], string $order = ""): string {
+
+        $query = 'SELECT ' . implode(', ', $fields) . ' FROM ' . $table;
+
+        if (!empty($data)) {
+            $query .= ' WHERE ' . $this->buildWhereClause($data);
+        }
+
+        if (!empty($order)) {
+            $query .= ' ORDER BY ' . $order;
+        }
+
+        if (!empty($limit)) {
+            if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) == 'pgsql') {
+                $query .= ' LIMIT ' . ((int)$limit);
+                if (!empty($start)) {
+                    $query .= ' OFFSET ' . ((int)$start);
+                }
+            } else {
+                $query .= ' LIMIT';
+                if (!empty($start)) {
+                    $query .= ' ' . ((int)$start) . ',';
+                }
+                $query .= ' ' . ((int)$limit);
+            }
+        }
+
+        return $query;
     }
 }

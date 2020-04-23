@@ -12,11 +12,12 @@
         </exclude>
     </groups>
     <filter>
-        <whitelist>
-            <directory suffix="Test.php">./src</directory>
+        <whitelist addUncoveredFilesFromWhitelist="true" processUncoveredFilesFromWhitelist="false">
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory suffix=".php">./tests</directory>
+                <directory suffix=".php">./vendor</directory>
+            </exclude>
         </whitelist>
     </filter>
-    <php>
-        <env name="DN_INI_FILE" value="./tests/test.ini"/>
-    </php>
 </phpunit>
