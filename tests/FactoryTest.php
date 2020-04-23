@@ -27,15 +27,15 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            [Factory::CONFIG_PREFIX . '.test.type',    'type'],
-            [Factory::CONFIG_PREFIX . '.test.db',       null],
-            [Factory::CONFIG_PREFIX . '.test.user',    'user'],
-            [Factory::CONFIG_PREFIX . '.test.pass',    'pass'],
-            [Factory::CONFIG_PREFIX . '.test.dsn',     'dsn'],
-            [Factory::CONFIG_PREFIX . '.test.options', 'options'],
-            [Factory::CONFIG_PREFIX . '.test.server',  'server'],
-            [Factory::CONFIG_PREFIX . '.test.port',    'port'],
-            [Factory::CONFIG_PREFIX . '.test.charset', 'charset'],
+            ['test.type',    'type'],
+            ['test.db',       null],
+            ['test.user',    'user'],
+            ['test.pass',    'pass'],
+            ['test.dsn',     'dsn'],
+            ['test.options', 'options'],
+            ['test.server',  'server'],
+            ['test.port',    'port'],
+            ['test.charset', 'charset'],
         ];
 
         // Configure the stub.
@@ -71,15 +71,15 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            [Factory::CONFIG_PREFIX . '.test.type',    'type'],
-            [Factory::CONFIG_PREFIX . '.test.db',      'db'],
-            [Factory::CONFIG_PREFIX . '.test.user',    'user'],
-            [Factory::CONFIG_PREFIX . '.test.pass',    'pass'],
-            [Factory::CONFIG_PREFIX . '.test.dsn',     'dsn'],
-            [Factory::CONFIG_PREFIX . '.test.options', 'options'],
-            [Factory::CONFIG_PREFIX . '.test.server',  'server'],
-            [Factory::CONFIG_PREFIX . '.test.port',    'port'],
-            [Factory::CONFIG_PREFIX . '.test.charset', 'charset'],
+            ['test.type',    'type'],
+            ['test.db',      'db'],
+            ['test.user',    'user'],
+            ['test.pass',    'pass'],
+            ['test.dsn',     'dsn'],
+            ['test.options', 'options'],
+            ['test.server',  'server'],
+            ['test.port',    'port'],
+            ['test.charset', 'charset'],
         ];
 
         // Configure the stub.

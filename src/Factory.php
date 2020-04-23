@@ -19,11 +19,6 @@ use \DealNews\GetConfig\GetConfig;
 class Factory {
 
     /**
-     * default ini prefix for db config
-     */
-    const CONFIG_PREFIX = 'dealnews.db';
-
-    /**
      * Creates a new PDO connection or returns one that already exists
      *
      * @param  string      $db      Name of the database configuration. This may
@@ -170,23 +165,24 @@ class Factory {
 
         // Check for an altername environment for this db
         $prefix = $cfg->get('db.factory.prefix');
-        if (empty($prefix)) {
-            $prefix = self::CONFIG_PREFIX;
+
+        if (!empty($prefix)) {
+            $prefix .= ".";
         }
 
         $config = [
-            'type'        => $cfg->get($prefix . ".$db.type"),
-            'db'          => $cfg->get($prefix . ".$db.db"),
-            'user'        => $cfg->get($prefix . ".$db.user"),
-            'pass'        => $cfg->get($prefix . ".$db.pass"),
+            'type'        => $cfg->get($prefix . "$db.type"),
+            'db'          => $cfg->get($prefix . "$db.db"),
+            'user'        => $cfg->get($prefix . "$db.user"),
+            'pass'        => $cfg->get($prefix . "$db.pass"),
             // PDO only
-            'dsn'         => $cfg->get($prefix . ".$db.dsn"),
-            'options'     => $cfg->get($prefix . ".$db.options"),
+            'dsn'         => $cfg->get($prefix . "$db.dsn"),
+            'options'     => $cfg->get($prefix . "$db.options"),
             // pgsql and mysql only
-            'server'      => $cfg->get($prefix . ".$db.server"),
-            'port'        => $cfg->get($prefix . ".$db.port"),
+            'server'      => $cfg->get($prefix . "$db.server"),
+            'port'        => $cfg->get($prefix . "$db.port"),
             // mysql only
-            'charset'     => $cfg->get($prefix . ".$db.charset"),
+            'charset'     => $cfg->get($prefix . "$db.charset"),
         ];
 
         if (empty($config['db'])) {

@@ -55,6 +55,7 @@ if (file_exists('/.dockerenv')) {
 }
 
 // Setup config variables
+putenv('db.factory.prefix=dealnews.db');
 putenv('DEALNEWS_DB_CHINOOK_TYPE=pdo');
 putenv('DEALNEWS_DB_CHINOOK_DSN=sqlite:tests/chinook.db');
 
