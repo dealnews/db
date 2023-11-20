@@ -232,8 +232,8 @@ class Text {
 
                 if (!$is_end && (
                     $char     == ' '     ||
-                        $char == ',' ||
-                        $char == '(' ||
+                        $char == ','     ||
+                        $char == '('     ||
                         (
                             $char == '"' &&
                             (

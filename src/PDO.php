@@ -175,6 +175,7 @@ class PDO {
             for ($x = 1; $x <= $this::RETRY_LIMIT; $x++) {
                 try {
                     $this->pdo = new $pdo_class($this->dsn, $this->username, $this->passwd, $this->options);
+
                     return;
                 } catch (\PDOException $e) {
                     // add logging for failures
