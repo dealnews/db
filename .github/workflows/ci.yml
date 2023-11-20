@@ -36,8 +36,8 @@ jobs:
 
     env:
       DB_DATABASE: mytestdb
-      DB_USER: test
-      DB_PASSWORD: test
+      DB_USER: root
+      DB_PASSWORD: root
 
     steps:
 

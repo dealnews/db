@@ -44,8 +44,10 @@ _startup();
 // Check if we are running inside a docker container already
 // If so, set the env vars correctly and don't run setup/teardown
 if (trim(`which docker`) === '') {
-    $mysql_host = 'db-mysql-sandbox';
+    $mysql_host = 'localhost';
     $mysql_port = 3306;
+    $mysql_user = 'root';
+    $mysql_pass = 'root';
     $pgsql_host = 'db-pgsql-sandbox';
     $pgsql_port = 5432;
 } else {
@@ -60,6 +62,8 @@ if (trim(`which docker`) === '') {
 
     $mysql_host = '127.0.0.1';
     $mysql_port = 43306;
+    $mysql_user = 'test';
+    $mysql_pass = 'test';
     $pgsql_host = '127.0.0.1';
     $pgsql_port = 55432;
 }
@@ -75,14 +79,14 @@ putenv('DEALNEWS_DB_TESTDB_DSN=sqlite:tests/fixtures/test_copy.db');
 
 putenv('DEALNEWS_DB_MYPDOTESTDB_TYPE=pdo');
 putenv("DEALNEWS_DB_MYPDOTESTDB_DSN=mysql:host={$mysql_host};port={$mysql_port};dbname=mytestdb");
-putenv('DEALNEWS_DB_MYPDOTESTDB_USER=test');
-putenv('DEALNEWS_DB_MYPDOTESTDB_PASS=test');
+putenv("DEALNEWS_DB_MYPDOTESTDB_USER={$mysql_user}");
+putenv("DEALNEWS_DB_MYPDOTESTDB_PASS={$mysql_pass}");
 
 putenv('DEALNEWS_DB_MYTESTDB_TYPE=mysql');
 putenv("DEALNEWS_DB_MYTESTDB_SERVER={$mysql_host}");
 putenv("DEALNEWS_DB_MYTESTDB_PORT={$mysql_port}");
-putenv('DEALNEWS_DB_MYTESTDB_USER=test');
-putenv('DEALNEWS_DB_MYTESTDB_PASS=test');
+putenv("DEALNEWS_DB_MYTESTDB_USER={$mysql_user}");
+putenv("DEALNEWS_DB_MYTESTDB_PASS={$mysql_pass}");
 
 putenv('DEALNEWS_DB_PGPDOTESTDB_TYPE=pdo');
 putenv("DEALNEWS_DB_PGPDOTESTDB_DSN=pgsql:host={$pgsql_host};port={$pgsql_port};dbname=pgtestdb");
