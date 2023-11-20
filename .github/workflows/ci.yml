@@ -34,24 +34,17 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      # Label used to access the service container
-      db-mysql-sandbox:
-        # Docker Hub image
-        image: mysql
-        # Provide the password for postgres
-        env:
-          MYSQL_ROOT_PASSWORD: percona-root
-          MYSQL_DATABASE: mytestdb
-          MYSQL_USER: test
-          MYSQL_PASSWORD: test
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:
+      DB_DATABASE: mytestdb
+      DB_USER: test
+      DB_PASSWORD: test
 
     steps:
+
+    - name: Set up MySQL
+      run: |
+        sudo /etc/init.d/mysql start
+        mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
 
     - name: Checkout
       uses: actions/checkout@v3
