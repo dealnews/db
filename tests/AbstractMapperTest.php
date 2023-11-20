@@ -2,14 +2,37 @@
 
 namespace DealNews\DB\Tests;
 
-use \DealNews\DB\Tests\TestClasses\Course;
-use \DealNews\DB\Tests\TestClasses\Mapper\CourseMapper;
-use \DealNews\DB\Tests\TestClasses\Student;
-use \DealNews\DB\Tests\TestClasses\Mapper\StudentMapper;
+use \DealNews\DB\Tests\TestClasses\Assignment;
 use \DealNews\DB\Tests\TestClasses\BadClass;
+use \DealNews\DB\Tests\TestClasses\Course;
 use \DealNews\DB\Tests\TestClasses\Mapper\BadCourseMapper;
+use \DealNews\DB\Tests\TestClasses\Mapper\CourseMapper;
+use \DealNews\DB\Tests\TestClasses\Mapper\StudentMapper;
+use \DealNews\DB\Tests\TestClasses\Student;
 
+/**
+ * @group integration
+ */
 class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
+
+    public function testCreateWithPrimaryKey() {
+
+        // Test Creation
+        $name = 'Test Existing Id';
+
+        $course            = new Course();
+        $course->name      = $name;
+        $course->course_id = 999999;
+
+        $mapper = new CourseMapper();
+        $course = $mapper->save($course);
+
+        $this->assertEquals(
+            999999,
+            $course->course_id
+        );
+    }
+
     public function testSimpleMapping() {
         $obj1 = $this->create(1);
         // create two because sqlite will always return
@@ -20,7 +43,7 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
         $this->load($obj1);
 
         $mapper  = new CourseMapper();
-        $courses = $mapper->loadMulti([1, 2]);
+        $courses = $mapper->loadMulti([$obj1->course_id, $obj2->course_id]);
         $this->assertEquals(2, count($courses));
 
         $this->update($obj1->course_id);
@@ -46,7 +69,7 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testBadMapper() {
-        $this->expectException("\PDOException");
+        $this->expectException('\\PDOException');
         $course            = new BadClass();
         $course->course_id = 'some string';
         $course->name      = 'Bad Test';
@@ -141,6 +164,11 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
             0,
             $student->courses[1]->course_id
         );
+
+        $this->assertNotEquals(
+            0,
+            $student->assignments[0]->assignment_id
+        );
     }
 
     public function testRelationModification() {
@@ -175,6 +203,11 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
                 $course1,
                 $course2,
             ];
+
+            $assignment       = new Assignment();
+            $assignment->name = 'Assignment 1';
+
+            $student->assignments = [$assignment];
 
             $mapper = new StudentMapper();
 

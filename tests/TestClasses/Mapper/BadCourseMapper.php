@@ -19,7 +19,7 @@ class BadCourseMapper extends \DealNews\DB\AbstractMapper {
      */
     public const PRIMARY_KEY = 'course_id';
 
-    public const MAPPED_CLASS = "\DealNews\DB\Tests\TestClasses\BadClass";
+    public const MAPPED_CLASS = '\\DealNews\\DB\\Tests\\TestClasses\\BadClass';
 
     public const MAPPING = [
         'course_id' => [],

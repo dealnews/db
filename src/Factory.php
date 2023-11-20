@@ -18,6 +18,8 @@ use \DealNews\GetConfig\GetConfig;
  */
 class Factory {
 
+    const DEFAULT_CONFIG_PREFIX = 'db';
+
     /**
      * Creates a new PDO connection or returns one that already exists
      *
@@ -28,14 +30,14 @@ class Factory {
      * @param  string|null $type    Optional database type that will override the
      *                              type in the configuration file
      *
-     * @return object
+     * @return PDO
      *
      * @throws \UnexpectedValueException
      * @throws \PDOException
      * @throws \LogicException
      */
     public static function init(string $db, array $options = null, string $type = null): PDO {
-        static $objs;
+        static $objs = [];
 
         if (!empty($type)) {
             $key = $type . '.' . $db;
@@ -62,7 +64,7 @@ class Factory {
      *
      * @param  array $config Configuration array returned by load_config
      *
-     * @return object
+     * @return PDO
      *
      * @throws \PDOException
      */
@@ -113,8 +115,6 @@ class Factory {
             $config['options'] = $config['options'] + $options;
         }
 
-        $obj = false;
-
         switch ($config['type']) {
             case 'mysql':
             case 'pgsql':
@@ -133,7 +133,7 @@ class Factory {
                 }
 
                 if (!empty($config['charset'])) {
-                    $config['dsn'] .= ";charset{$config['charset']}";
+                    $config['dsn'] .= ";charset={$config['charset']}";
                 }
                 break;
             case 'pdo':
@@ -143,7 +143,6 @@ class Factory {
                 break;
             default:
                 throw new \UnexpectedValueException("Invalid database type `{$config['type']}`", 2);
-                break;
         }
 
         return $config;
@@ -166,8 +165,12 @@ class Factory {
         // Check for an altername environment for this db
         $prefix = $cfg->get('db.factory.prefix');
 
+        if (empty($prefix)) {
+            $prefix = static::DEFAULT_CONFIG_PREFIX;
+        }
+
         if (!empty($prefix)) {
-            $prefix .= ".";
+            $prefix .= '.';
         }
 
         $config = [

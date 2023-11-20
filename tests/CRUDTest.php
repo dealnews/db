@@ -4,30 +4,62 @@ namespace DealNews\DB\Tests;
 
 use \DealNews\DB\CRUD;
 
+/**
+ * @group integration
+ */
 class CRUDTest extends \PHPUnit\Framework\TestCase {
+    use RequireDatabase {
+        RequireDatabase::setUp as dbSetup;
+    }
+
     protected $crud;
 
     public function setUp(): void {
+        $this->dbSetup();
         $this->crud = new CRUD(\DealNews\DB\Factory::init('testdb'));
     }
 
+    public function testFactory() {
+        $crud = CRUD::factory('testdb');
+        $this->assertTrue($crud instanceof CRUD);
+    }
+
     public function testBuildSelectQuery() {
-        $query = $this->crud->buildSelectQuery("table");
+        $query = $this->crud->buildSelectQuery('table');
         $this->assertEquals(
-            "SELECT * FROM table",
+            'SELECT * FROM table',
             $query
         );
 
         $query = $this->crud->buildSelectQuery(
-            "table",
-            ["foo" => "bar"],
+            'table',
+            ['foo' => 'bar'],
             100,
             200,
-            ["some_col", "foo"],
-            "some_col"
+            ['some_col', 'foo'],
+            'some_col'
         );
         $this->assertEquals(
-            "SELECT some_col, foo FROM table WHERE (foo = :foo0) ORDER BY some_col LIMIT 200, 100",
+            'SELECT "some_col", "foo" FROM table WHERE ("foo" = :foo0) ORDER BY "some_col" LIMIT 200, 100',
+            $query
+        );
+    }
+
+    /**
+     * @group integration
+     */
+    public function testMySQLQuoteString() {
+        $db = \DealNews\DB\Factory::init('mytestdb');
+        $this->assertTrue(
+            $db instanceof \DealNews\DB\PDO,
+            'Are you running the docker container? See README.'
+        );
+
+        $crud = new CRUD($db);
+
+        $query = $crud->buildSelectQuery('time_dimension', [], 1, 2, ['foo', 'bar'], 'time_key desc, foo, bar');
+        $this->assertEquals(
+            'SELECT `foo`, `bar` FROM time_dimension ORDER BY `time_key` desc, `foo`, `bar` LIMIT 2, 1',
             $query
         );
     }
@@ -44,15 +76,15 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
 
         $crud = new CRUD($db);
 
-        $query = $crud->buildSelectQuery('time_dimension', [], 1, 2, ["*"], "time_key");
+        $query = $crud->buildSelectQuery('time_dimension', [], 1, 2, ['*'], 'time_key');
         $this->assertEquals(
-            "SELECT * FROM time_dimension ORDER BY time_key LIMIT 1 OFFSET 2",
+            'SELECT * FROM time_dimension ORDER BY "time_key" LIMIT 1 OFFSET 2',
             $query
         );
     }
 
     public function testBadInsert() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $result = $this->crud->create(
             'test',
             [
@@ -62,12 +94,12 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testBadGetter() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $result = $this->crud->foo;
     }
 
     public function testBuildParametersException() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $result = $this->crud->buildParameters(
             [
                 [
@@ -85,7 +117,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testBuildWhereException() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $result = $this->crud->buildWhereClause(
             [
                 'OR' => [
@@ -105,7 +137,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testBuildUpdateException1() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $this->expectExceptionCode(1);
         $result = $this->crud->buildUpdateClause(
             [
@@ -115,7 +147,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testBuildUpdateException2() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $this->expectExceptionCode(2);
         $result = $this->crud->buildUpdateClause(
             [
@@ -222,7 +254,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
             ]
         );
         $this->assertEquals(
-            '(foo = :foo0 AND bar = :bar0)',
+            '("foo" = :foo0 AND "bar" = :bar0)',
             $result,
             'Simple field list'
         );
@@ -236,7 +268,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
             ]
         );
         $this->assertEquals(
-            '((foo = :foo1 AND bar = :bar1))',
+            '(("foo" = :foo1 AND "bar" = :bar1))',
             $result,
             'Single depth level'
         );
@@ -251,7 +283,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         );
 
         $this->assertEquals(
-            '(foo = :foo1 OR bar = :bar1)',
+            '("foo" = :foo1 OR "bar" = :bar1)',
             $result,
             'Double depth level with OR'
         );
@@ -272,7 +304,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         );
 
         $this->assertEquals(
-            '((foo = :foo2 AND bar = :bar2) OR (foo = :foo3 AND bar = :bar3))',
+            '(("foo" = :foo2 AND "bar" = :bar2) OR ("foo" = :foo3 AND "bar" = :bar3))',
             $result,
             'Triple depth level with OR'
         );
@@ -395,12 +427,15 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     protected function createAndRead() {
         $name        = 'Test ' . time();
         $description = 'Test Description ' . time();
+        // if PDO isn't properly binding booleans, true will work, but false will fail
+        $active      = false;
 
         $result = $this->crud->create(
             'test',
             [
                 'name'        => $name,
                 'description' => $description,
+                'active'      => $active,
             ]
         );
 
@@ -429,6 +464,11 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(
             $description,
             $row[0]['description']
+        );
+
+        $this->assertEquals(
+            0,
+            $row[0]['active']
         );
 
         return $row[0];

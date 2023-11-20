@@ -2,6 +2,8 @@
 .DS_Store
 *~
 *.sw[aop]
+.php-cs-fixer.cache
+.phpunit.result.cache
 
 # Deployment dependencies
 vendor
@@ -14,3 +16,6 @@ phpunit.xml
 .idea
 *.sublime-workspace
 *.sublime-project
+
+# test artifacts
+tests/fixtures/test_copy.db

@@ -14,12 +14,17 @@ namespace DealNews\DB\Tests;
 use \DealNews\DB\Factory;
 use \DealNews\DB\PDO;
 
+/**
+ * @group integration
+ */
 class FactoryTest extends \PHPUnit\Framework\TestCase {
+    use RequireDatabase;
+
     /**
      * @group unit
      */
     public function testGetConfigEmptyDB() {
-        $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
+        $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->setMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
@@ -27,15 +32,15 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            ['test.type',    'type'],
-            ['test.db',       null],
-            ['test.user',    'user'],
-            ['test.pass',    'pass'],
-            ['test.dsn',     'dsn'],
-            ['test.options', 'options'],
-            ['test.server',  'server'],
-            ['test.port',    'port'],
-            ['test.charset', 'charset'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.type',    'type'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.db',       null],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.user',    'user'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.pass',    'pass'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.dsn',     'dsn'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.options', 'options'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.server',  'server'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.port',    'port'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.charset', 'charset'],
         ];
 
         // Configure the stub.
@@ -63,7 +68,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testGetConfigDefaultPrefix() {
-        $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
+        $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->setMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
@@ -71,15 +76,15 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         // Create a map of arguments to return values.
         $map = [
             ['db.factory.prefix',        null],
-            ['test.type',    'type'],
-            ['test.db',      'db'],
-            ['test.user',    'user'],
-            ['test.pass',    'pass'],
-            ['test.dsn',     'dsn'],
-            ['test.options', 'options'],
-            ['test.server',  'server'],
-            ['test.port',    'port'],
-            ['test.charset', 'charset'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.type',    'type'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.db',      'db'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.user',    'user'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.pass',    'pass'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.dsn',     'dsn'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.options', 'options'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.server',  'server'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.port',    'port'],
+            [Factory::DEFAULT_CONFIG_PREFIX . '.test.charset', 'charset'],
         ];
 
         // Configure the stub.
@@ -107,7 +112,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testGetConfigCustomPrefix() {
-        $gc = $this->getMockBuilder('\DealNews\GetConfig\GetConfig')
+        $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->setMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
@@ -201,7 +206,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'port'    => null,
                     'charset' => null,
                 ],
-                [4=> 4, 5=>5, 6=>6],
+                [4 => 4, 5 => 5, 6 => 6],
                 null,
                 [
                     'type'    => 'pdo',
@@ -209,7 +214,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'user'    => 'user',
                     'pass'    => 'pass',
                     'dsn'     => 'dsn',
-                    'options' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
+                    'options' => [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6],
                     'server'  => null,
                     'port'    => null,
                     'charset' => null,
@@ -234,7 +239,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                     'db'      => 'test',
                     'user'    => 'user',
                     'pass'    => 'pass',
-                    'dsn'     => 'mysql:host=test;port=;dbname=test;charsetutf8mb4',
+                    'dsn'     => 'mysql:host=test;port=;dbname=test;charset=utf8mb4',
                     'options' => [],
                     'server'  => ['test'],
                     'port'    => null,
@@ -277,7 +282,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         $drivers = \PDO::getAvailableDrivers();
 
         if (!in_array('sqlite', $drivers)) {
-           $this->markTestSkipped('PDO SQLite Driver not installed');
+            $this->markTestSkipped('PDO SQLite Driver not installed');
         }
 
         $db1 = Factory::init('chinook');
@@ -293,7 +298,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         $drivers = \PDO::getAvailableDrivers();
 
         if (!in_array($type, $drivers)) {
-           $this->markTestSkipped("PDO Driver `$type` not installed");
+            $this->markTestSkipped("PDO Driver `$type` not installed");
         }
 
         $db = Factory::build(Factory::loadConfig(Factory::getConfig($dbname), $options));
@@ -308,12 +313,12 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         $err     = $sth->errorInfo();
         $this->assertTrue(
             $success,
-            $err[2] ?? "Unknown Error"
+            $err[2] ?? 'Unknown Error'
         );
 
         if (!is_null($expect)) {
             $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
-           $this->assertEquals(
+            $this->assertEquals(
                 $expect,
                 $data
             );
@@ -365,7 +370,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
                 [
                     [
                         'Variable_name' => 'sql_mode',
-                        'Value'         => 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION',
+                        'Value'         => 'STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_ENGINE_SUBSTITUTION',
                     ],
                 ],
             ],
@@ -376,7 +381,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testNoDSN() {
-        $this->expectException("\UnexpectedValueException");
+        $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(1);
         Factory::loadConfig(
             [
@@ -392,7 +397,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testBadType() {
-        $this->expectException("\UnexpectedValueException");
+        $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(2);
         Factory::loadConfig(
             [
@@ -410,7 +415,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testNoServer() {
-        $this->expectException("\LogicException");
+        $this->expectException('\\LogicException');
         $this->expectExceptionCode(3);
         Factory::loadConfig(
             [
@@ -427,7 +432,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testBadOptions() {
-        $this->expectException("\UnexpectedValueException");
+        $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(4);
         Factory::loadConfig(
             [
@@ -446,7 +451,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      * @group unit
      */
     public function testNoDB() {
-        $this->expectException("\UnexpectedValueException");
+        $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(5);
         Factory::loadConfig(
             [

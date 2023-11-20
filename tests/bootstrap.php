@@ -2,6 +2,14 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+$opts = getopt('', ['group::']);
+
+if(isset($opts['group']) && strlen($opts['group']) > 0) {
+    $opts['group'] = explode(',', $opts['group']);
+}
+
+define('INTEGRATION_TESTS', empty($opts['group']) || in_array('integration', $opts['group']));
+
 /**
  * Function for helping debug tests since modern PHP Unit
  * does not allow var_dump to send output to STDOUT.
@@ -35,7 +43,7 @@ _startup();
 
 // Check if we are running inside a docker container already
 // If so, set the env vars correctly and don't run setup/teardown
-if (file_exists('/.dockerenv')) {
+if (trim(`which docker`) === '') {
     $mysql_host = 'db-mysql-sandbox';
     $mysql_port = 3306;
     $pgsql_host = 'db-pgsql-sandbox';
@@ -45,7 +53,9 @@ if (file_exists('/.dockerenv')) {
     passthru(__DIR__ . '/setup.sh');
 
     register_shutdown_function(function () {
-        passthru(__DIR__."/teardown.sh");
+        if (empty(getenv('KEEPCONTAINERS'))) {
+            passthru(__DIR__ . '/teardown.sh');
+        }
     });
 
     $mysql_host = '127.0.0.1';
@@ -56,6 +66,7 @@ if (file_exists('/.dockerenv')) {
 
 // Setup config variables
 putenv('db.factory.prefix=dealnews.db');
+
 putenv('DEALNEWS_DB_CHINOOK_TYPE=pdo');
 putenv('DEALNEWS_DB_CHINOOK_DSN=sqlite:tests/chinook.db');
 

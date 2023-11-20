@@ -20,6 +20,30 @@ class CRUD {
     protected $pdo;
 
     /**
+     * Character used to quote column names in queries
+     *
+     * @var        string
+     */
+    protected $quote_column_char = '"';
+
+    /**
+     * Helper factory for creating singletons using only a db name
+     *
+     * @param      string      $db_name  The database name
+     *
+     * @return     CRUD
+     */
+    public static function factory(string $db_name): CRUD {
+        static $instances = [];
+
+        if (empty($instances[$db_name])) {
+            $instances[$db_name] = new self(Factory::init($db_name));
+        }
+
+        return $instances[$db_name];
+    }
+
+    /**
      * Creates a new CRUD object
      *
      * @param \DealNews\DB\PDO $pdo PDO object
@@ -27,13 +51,21 @@ class CRUD {
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+        $driver = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        switch ($driver) {
+            case 'mysql':
+                $this->quote_column_char = '`';
+                break;
+        }
     }
 
     /**
      * Getter for getting the pdo object
      *
      * @param  string $var Property name. Only `pdo` is allowed.
-     * @return \PDO
+     * @return \DealNews\DB\PDO
      */
     public function __get($var) {
         if ($var == 'pdo') {
@@ -61,11 +93,19 @@ class CRUD {
             $params[":$key"] = $value;
         }
 
+        $keys = array_keys($data);
+
+        $cols = [];
+
+        foreach ($keys as $key) {
+            $cols[] = $this->quoteField($key);
+        }
+
         $this->run(
             'INSERT INTO ' . $table . '
-                    (' . implode(', ', array_keys($data)) . ')
+                    (' . implode(', ', $cols) . ')
                     VALUES
-                    (:' . implode(', :', array_keys($data)) . ')',
+                    (:' . implode(', :', $keys) . ')',
             $params
         );
 
@@ -77,32 +117,21 @@ class CRUD {
      *
      * @param      string  $table   The table name
      * @param      array   $data    Fields and values to use in the where clause
-     * @param      int     $limit   Number of rows to return
-     * @param      int     $start   Row to start at
+     * @param      ?int    $limit   Number of rows to return
+     * @param      ?int    $start   Row to start at
      * @param      array   $fields  List of fields to return
      * @param      string  $order   Order by clause
      *
      * @return     array
      * @throws \PDOException
      */
-    public function read(string $table, array $data = [], int $limit = null, int $start = null, array $fields = ['*'], string $order = ""): array {
-        $row = [];
-
+    public function read(string $table, array $data = [], ?int $limit = null, ?int $start = null, array $fields = ['*'], string $order = ''): array {
         $query = $this->buildSelectQuery($table, $data, $limit, $start, $fields, $order);
 
-        $sth = $this->run(
+        return $this->runFetch(
             $query,
             $this->buildParameters($data)
         );
-
-        if ($sth) {
-            $row = $sth->fetchAll(\PDO::FETCH_ASSOC);
-            if (empty($row)) {
-                $row = [];
-            }
-        }
-
-        return $row;
     }
 
     /**
@@ -118,10 +147,10 @@ class CRUD {
         $this->run(
             'UPDATE ' . $table . ' SET ' .
             $this->buildUpdateClause($data) . ' ' .
-            'WHERE ' . $this->buildWhereClause($where),
+            'WHERE ' . $this->buildWhereClause($where, 1),
             array_merge(
                 $this->buildParameters($data),
-                $this->buildParameters($where)
+                $this->buildParameters($where, 1)
             )
         );
 
@@ -153,10 +182,37 @@ class CRUD {
      */
     public function run(string $query, array $params = []): PDOStatement {
         $sth = $this->pdo->prepare($query);
-
-        $success = $sth->execute($params);
+        foreach ($params as $key => $value) {
+            $sth->bindValue($key, $value, (is_bool($value) ? \PDO::PARAM_BOOL : \PDO::PARAM_STR));
+        }
+        $sth->execute();
 
         return $sth;
+    }
+
+    /**
+     * Prepares a query, executes it and fetches all rows
+     * @param  string $query  Query to execute
+     * @param  array  $params List of fields and values to bind to the query
+     * @return array
+     * @throws \PDOException
+     */
+    public function runFetch(string $query, array $params = []): array {
+        $rows = [];
+
+        $sth = $this->run(
+            $query,
+            $params
+        );
+
+        if ($sth) {
+            $rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+            if (empty($rows)) {
+                $rows = [];
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -196,8 +252,8 @@ class CRUD {
      * Builds a field list for a prepared statement and array of parameters
      * to bind to the query.
      *
-     * @param  array  $fields      Array of fields and values
-     * @param  string $conjunction Join string for the field list
+     * @param  array  $fields  Array of fields and values
+     * @param  int    $depth   Tracks depth of recursive calls
      * @return string
      */
     public function buildWhereClause(array $fields, int $depth = 0): string {
@@ -216,11 +272,11 @@ class CRUD {
         foreach ($fields as $field => $value) {
             if (!is_numeric($field)) {
                 if (is_scalar($value)) {
-                    $clauses[] = "$field = :{$field}{$depth}";
+                    $clauses[] = $this->quoteField($field) . " = :{$field}{$depth}";
                 } elseif (is_array($value)) {
                     $field_clauses = [];
                     foreach ($value as $key => $val) {
-                        $field_clauses[] = "$field = :{$field}{$key}{$depth}";
+                        $field_clauses[] = $this->quoteField($field) . " = :{$field}{$key}{$depth}";
                     }
                     if (count($field_clauses) > 1) {
                         $clauses[] = '(' . implode(' OR ', $field_clauses) . ')';
@@ -250,7 +306,7 @@ class CRUD {
      * @param  array  $fields      Array of fields and values
      * @return string
      */
-    public function buildUpdateClause(array $fields): string {
+    public function buildUpdateClause(array $fields, int $depth = 0): string {
         $clauses = [];
         foreach ($fields as $field => $value) {
             if (is_numeric($field)) {
@@ -259,7 +315,7 @@ class CRUD {
             if (empty($field)) {
                 throw new \LogicException("Invalid value for $field in update.", 2);
             }
-            $clauses[] = "$field = :{$field}0";
+            $clauses[] = $this->quoteField($field) . " = :{$field}{$depth}";
         }
 
         return implode(', ', $clauses);
@@ -270,14 +326,19 @@ class CRUD {
      *
      * @param      string  $table   The table
      * @param      array   $data    The data
-     * @param      int     $limit   The limit
-     * @param      int     $start   The start
+     * @param      ?int    $limit   The limit
+     * @param      ?int    $start   The start
      * @param      array   $fields  The fields
      * @param      string  $order   The order
      *
      * @return     string  The select query.
      */
-    public function buildSelectQuery(string $table, array $data = [], int $limit = null, int $start = null, array $fields = ['*'], string $order = ""): string {
+    public function buildSelectQuery(string $table, array $data = [], ?int $limit = null, ?int $start = null, array $fields = ['*'], string $order = ''): string {
+        if ($fields != ['*']) {
+            foreach ($fields as $key => $field) {
+                $fields[$key] = $this->quoteField($field);
+            }
+        }
 
         $query = 'SELECT ' . implode(', ', $fields) . ' FROM ' . $table;
 
@@ -286,6 +347,23 @@ class CRUD {
         }
 
         if (!empty($order)) {
+            if (strpos($order, ',') !== false || strpos($order, ' ') !== false) {
+                $new_order = [];
+                $cols      = explode(',', $order);
+
+                foreach ($cols as $col) {
+                    $col = trim($col);
+                    if (strpos($col, ' ') !== false) {
+                        $parts       = explode(' ', $col);
+                        $new_order[] = $this->quoteField($parts[0]) . ' ' . $parts[1];
+                    } else {
+                        $new_order[] = $this->quoteField($col);
+                    }
+                }
+                $order = implode(', ', $new_order);
+            } else {
+                $order = $this->quoteField($order);
+            }
             $query .= ' ORDER BY ' . $order;
         }
 
@@ -305,5 +383,16 @@ class CRUD {
         }
 
         return $query;
+    }
+
+    /**
+     * Quotes a field name using the correct quote character
+     *
+     * @param      string  $field  The field
+     *
+     * @return     string
+     */
+    protected function quoteField(string $field): string {
+        return $this->quote_column_char . $field . $this->quote_column_char;
     }
 }

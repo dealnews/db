@@ -26,7 +26,7 @@ class StudentMapper extends \DealNews\DB\AbstractMapper {
      */
     public const PRIMARY_KEY = 'student_id';
 
-    public const MAPPED_CLASS = "\DealNews\DB\Tests\TestClasses\Student";
+    public const MAPPED_CLASS = '\\DealNews\\DB\\Tests\\TestClasses\\Student';
 
     /**
      * The constraints for the properties
@@ -37,13 +37,18 @@ class StudentMapper extends \DealNews\DB\AbstractMapper {
         'student_id' => [],
         'name'       => [],
         'courses'    => [
-            'mapper' => "DealNews\DB\Tests\TestClasses\Mapper\CourseMapper",
-            'lookup' => [
-                'table'          => 'student_course_xref',
-                'primary_key'    => 'student_course_xref_id',
-                'foreign_column' => 'student_id',
-                'mapper_column'  => 'course_id',
-            ],
+            'mapper'         => 'DealNews\\DB\\Tests\\TestClasses\\Mapper\\CourseMapper',
+            'type'           => 'lookup',
+            'table'          => 'student_course_xref',
+            'primary_key'    => 'student_course_xref_id',
+            'foreign_column' => 'student_id',
+            'mapper_column'  => 'course_id',
+        ],
+        'assignments'    => [
+            'mapper'         => 'DealNews\\DB\\Tests\\TestClasses\\Mapper\\AssignmentMapper',
+            'table'          => 'assignments',
+            'primary_key'    => 'assignment_id',
+            'foreign_column' => 'student_id',
         ],
     ];
 }

@@ -3,16 +3,23 @@
 namespace DealNews\DB\Tests\TestClasses;
 
 /**
- * Test Student Class
+ * Test Assignment Class
  *
  * @author      Brian Moon <brianm@dealnews.com>
  * @copyright   1997-Present DealNews.com, Inc
  * @package     RBAC Web
  */
-class Student {
+class Assignment {
 
     /**
      * The unique id
+     *
+     * @var integer
+     */
+    public $assignment_id = 0;
+
+    /**
+     * The student id
      *
      * @var integer
      */
@@ -24,16 +31,4 @@ class Student {
      * @var string
      */
     public $name = '';
-
-    /**
-     * Test Course set
-     * @var array
-     */
-    public $courses = [];
-
-    /**
-     * Test Assignment set
-     * @var array
-     */
-    public $assignments = [];
 }

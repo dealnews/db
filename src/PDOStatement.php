@@ -2,8 +2,6 @@
 
 namespace DealNews\DB;
 
-use \DealNews\Metrics\Collector;
-
 /**
  * Wrapper for PDOStatement
  *
@@ -12,7 +10,6 @@ use \DealNews\Metrics\Collector;
  * @package     DealNews\DB
  */
 class PDOStatement {
-    use \DealNews\DB\PDO\CheckErrorCode;
 
     /**
      * Real \PDOStatement object
@@ -67,10 +64,12 @@ class PDOStatement {
 
     /**
      * @see https://www.php.net/manual/en/pdostatement.execute.php
-     * @param  array $input_parameters
+     * @param  ?array $input_parameters
      * @return bool
+     * @phan-suppress PhanUnusedPublicNoOverrideMethodParameter
      */
     public function execute(?array $input_parameters = []) {
+        $result = false;
         for ($x = 1; $x <= PDO::RETRY_LIMIT; $x++) {
             try {
                 $result = $this->__call(__FUNCTION__, func_get_args());
@@ -83,9 +82,13 @@ class PDOStatement {
             }
 
             // if we get here, we didn't get true in $result
-            if ($x >= PDO::RETRY_LIMIT || !$this->checkErrorCode($this->stmt->errorCode())) {
+            if ($x >= PDO::RETRY_LIMIT || !$this->pdo->checkErrorCode($this->stmt->errorCode())) {
                 if (isset($result) && is_object($result)) {
-                    throw $result;
+                    throw new \PDOException(
+                        "Attempted run query $x times and failed: " . $result->getMessage(),
+                        $result->getCode(),
+                        $result
+                    );
                 }
             }
         }
@@ -101,6 +104,6 @@ class PDOStatement {
      * @return void
      */
     public function connect($reconnect = false) {
-        return $this->pdo->connect($reconnect);
+        $this->pdo->connect($reconnect);
     }
 }

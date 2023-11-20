@@ -1,0 +1,72 @@
+name: Testing DealNews\GetConfig
+
+on: [push, pull_request]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-versions: ['8.0', '8.1', '8.2']
+        include:
+          - operating-system: 'ubuntu-latest'
+            php-versions: '8.0'
+            phpunit-versions: 9
+
+    # Service containers to run with `container-job`
+    services:
+
+      # Label used to access the service container
+      db-pgsql-sandbox:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: pgtestdb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # Label used to access the service container
+      db-mysql-sandbox:
+        # Docker Hub image
+        image: mysql
+        # Provide the password for postgres
+        env:
+          MYSQL_ROOT_PASSWORD: percona-root
+          MYSQL_DATABASE: mytestdb
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Composer Install
+      uses: php-actions/composer@v6
+      with:
+        php_version: ${{ matrix.php-versions }}
+
+    - name: PHPUnit tests
+      uses: php-actions/phpunit@v3
+      with:
+        php_extensions: "pcov mysqli mysqlnd pdo pdo_mysql pdo_pgsql pdo_sqlite pgsql sqlite3"
+        version: "9.6"
+        php_version: ${{ matrix.php-versions }}
+
+    - name: Run Phan
+      uses: k1LoW/phan-action@v0

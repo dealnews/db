@@ -25,6 +25,11 @@ use \Phan\Config;
  * '-d' flag.
  */
 return [
+
+    "autoload_internal_extension_signatures" => [
+        ".phan/pdo.phan_php"
+    ],
+
     // If true, missing properties will be created when
     // they are first seen. If false, we'll report an
     // error message.
@@ -84,7 +89,8 @@ return [
         'PhanUnreferencedUseNormal',
         'PhanUnreferencedProtectedMethod',
         'PhanUnreferencedProtectedProperty',
-
+        'PhanUnusedVariableValueOfForeachWithKey',
+        'PhanNonClassMethodCall',
     ],
 
     // A list of directories that should be parsed for class and
@@ -104,6 +110,7 @@ return [
     // to parse, but not analyze
     "exclude_analysis_directory_list" => [
         "vendor",
+        "tests",
     ],
 
     // A file list that defines files that will be excluded

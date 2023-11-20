@@ -7,4 +7,5 @@ docker run -d -p 43306:3306 \
     -e MYSQL_DATABASE=mytestdb \
     -e MYSQL_USER=test \
     -e MYSQL_PASSWORD=test \
-    percona:5.7
+    mysql:latest \
+        --default-authentication-plugin=mysql_native_password

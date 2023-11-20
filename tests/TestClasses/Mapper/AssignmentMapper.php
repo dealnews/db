@@ -3,13 +3,13 @@
 namespace DealNews\DB\Tests\TestClasses\Mapper;
 
 /**
- * Test Course Mapper
+ * Test Assignment Mapper
  *
  * @author      Brian Moon <brianm@dealnews.com>
  * @copyright   1997-Present DealNews.com, Inc
  * @package     DataMapper
  */
-class CourseMapper extends \DealNews\DB\AbstractMapper {
+class AssignmentMapper extends \DealNews\DB\AbstractMapper {
 
     /**
      * Database configuration name
@@ -19,17 +19,18 @@ class CourseMapper extends \DealNews\DB\AbstractMapper {
     /**
      * Table name
      */
-    public const TABLE = 'courses';
+    public const TABLE = 'assignments';
 
     /**
      * Table primary key column name
      */
-    public const PRIMARY_KEY = 'course_id';
+    public const PRIMARY_KEY = 'assignment_id';
 
-    public const MAPPED_CLASS = '\\DealNews\\DB\\Tests\\TestClasses\\Course';
+    public const MAPPED_CLASS = '\\DealNews\\DB\\Tests\\TestClasses\\Assignment';
 
     public const MAPPING = [
-        'course_id' => [],
-        'name'      => [],
+        'assignment_id' => [],
+        'student_id'    => [],
+        'name'          => [],
     ];
 }

@@ -67,10 +67,11 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * CRUD PDO helper object
      * @var \DealNews\DB\CRUD
      */
-    protected $crud;
+    protected CRUD $crud;
 
     /**
      * Creates a new mapper
+     *
      * @param \DealNews\DB\CRUD|null $crud Optional CRUD object
      */
     public function __construct(CRUD $crud = null) {
@@ -85,12 +86,15 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
     /**
      * Loads an object from the database
+     *
      * @param  int|string    $id Primay key id of the object to load
-     * @return boolean|object
+     *
+     * @return ?object
+     *
      * @throws \Error
      */
-    public function load($id) {
-        $object = false;
+    public function load($id): ?object {
+        $object = null;
 
         $data = $this->find([$this::PRIMARY_KEY => $id]);
 
@@ -103,24 +107,28 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
     /**
      * Loads multiple objects from the database
+     *
      * @param  array    $ids Array of primay key ids of the objects to load
-     * @return boolean|array
+     *
+     * @return null|array
+     *
      * @throws \Error
      */
-    public function loadMulti(array $ids) {
+    public function loadMulti(array $ids): ?array {
         return $this->find([$this::PRIMARY_KEY => $ids]);
     }
 
     /**
      * Finds multiple objects in the database
-     * @param  array    $filter Array of filters where the keys are column
-     *                          names and the values are column values to
-     *                          filter upon.
-     * @return boolean|array
-     * @throws \Error
+     *
+     * @param      array       $filter  Array of filters where the keys are column
+     *                                  names and the values are column values to
+     *                                  filter upon.
+     *
+     * @return     array|null
      */
-    public function find(array $filter) {
-        $objects = false;
+    public function find(array $filter): ?array {
+        $objects = null;
 
         $data = $this->crud->read($this::TABLE, $filter);
 
@@ -128,7 +136,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
             foreach ($data as $row) {
                 $object = $this->setData($row);
                 $object = $this->loadRelations($object);
-
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $objects[$this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY])] = $object;
             }
         }
@@ -137,17 +145,13 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     }
 
     /**
-     * Saves the object to the database
-     * @return boolean
-     * @throws \Error
+     * Saves an object and returns it
+     *
+     * @param      object  $object  The object to save
+     *
+     * @return     object
      */
-    public function save($object) {
-        $data = $this->getData($object);
-
-        if (array_key_exists($this::PRIMARY_KEY, $data)) {
-            unset($data[$this::PRIMARY_KEY]);
-        }
-
+    public function save($object): object {
         $already_in_transaction = $this->crud->pdo->inTransaction();
 
         if (!$already_in_transaction) {
@@ -155,13 +159,38 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         }
 
         try {
+            $update_constraint = $this->getUpdateConstraint($object);
+            $data              = $this->getData($object);
+
+            $insert = false;
+
+            // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
             if ($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]) == 0) {
+                $insert = true;
+                if (array_key_exists($this::PRIMARY_KEY, $data)) {
+                    unset($data[$this::PRIMARY_KEY]);
+                }
+            } else {
+                $existing = $this->crud->read(
+                    $this::TABLE,
+                    [
+                        // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                        $this::PRIMARY_KEY => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
+                    ]
+                );
+                if (empty($existing)) {
+                    $insert = true;
+                }
+            }
+
+            if ($insert) {
                 $success = $this->crud->create($this::TABLE, $data);
                 if ($success) {
                     $this->setValue(
                         $object,
                         $this::PRIMARY_KEY,
                         [$this::PRIMARY_KEY => $this->crud->pdo->lastInsertId($this::SEQUENCE_NAME)],
+                        // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                         $this::MAPPING[$this::PRIMARY_KEY]
                     );
                 }
@@ -169,14 +198,13 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 $success = $this->crud->update(
                     $this::TABLE,
                     $data,
-                    [
-                        $this::PRIMARY_KEY => $object->{$this::PRIMARY_KEY},
-                    ]
+                    $update_constraint
                 );
             }
 
             if ($success) {
                 $object = $this->saveRelations($object);
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $object = $this->load($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
             }
         } catch (\PDOException $e) {
@@ -199,10 +227,12 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
     /**
      * Deletes an object
-     * @return boolean
-     * @throws \Error
+     *
+     * @param      int|string  $id     The unique id
+     *
+     * @return     bool
      */
-    public function delete($id) {
+    public function delete($id): bool {
         $success = $this->crud->delete(
             $this::TABLE,
             [
@@ -215,34 +245,92 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
     /**
      * Loads the relational objects
-     * @param  object $object Object to which to add the relations
-     * @return object
+     *
+     * @param      object  $object  The object
+     *
+     * @return     object
      */
-    protected function loadRelations($object) {
+    protected function loadRelations(object $object): object {
         foreach ($this::MAPPING as $property => $mapping) {
-            if (!empty($mapping['mapper']) && !empty($mapping['lookup'])) {
-                $objects = [];
-                $rows    = $this->crud->read(
-                    $mapping['lookup']['table'],
-                    [
-                        $mapping['lookup']['foreign_column'] => $object->{$this::PRIMARY_KEY},
-                    ]
-                );
-
-                if (!empty($rows)) {
-                    $mapper = new $mapping['mapper']();
-                    foreach ($rows as $row) {
-                        $objects[] = $mapper->load($row[$mapping['lookup']['mapper_column']]);
-                    }
+            if (!empty($mapping['mapper'])) {
+                if (!empty($mapping['type']) && $mapping['type'] == 'lookup') {
+                    $object = $this->loadLookupObjects(
+                        $object,
+                        $property,
+                        $mapping
+                    );
+                } else {
+                    $object = $this->loadRelatedObjects(
+                        $object,
+                        $property,
+                        $mapping
+                    );
                 }
-                $this->setValue(
-                    $object,
-                    $property,
-                    [$property => $objects],
-                    $mapping
-                );
             }
         }
+
+        return $object;
+    }
+
+    /**
+     * Loads related objects.
+     *
+     * @param      object  $object    The object
+     * @param      string  $property  The property
+     * @param      array   $mapping   The mapping
+     *
+     * @return     object
+     */
+    protected function loadRelatedObjects(object $object, string $property, array $mapping): object {
+        $mapper  = new $mapping['mapper']();
+        $objects = $mapper->find(
+            [
+                $mapping['foreign_column'] => $object->{$this::PRIMARY_KEY},
+            ]
+        );
+
+        if (!empty($objects)) {
+            $this->setValue(
+                $object,
+                $property,
+                [$property => array_values($objects)],
+                $mapping
+            );
+        }
+
+        return $object;
+    }
+
+    /**
+     * Loads relational objects that are related via a lookup (aka xref) table
+     *
+     * @param      object  $object    The object
+     * @param      string  $property  The property
+     * @param      array   $mapping   The mapping
+     *
+     * @return     object
+     */
+    protected function loadLookupObjects(object $object, string $property, array $mapping): object {
+        $objects = [];
+        $rows    = $this->crud->read(
+            $mapping['table'],
+            [
+                $mapping['foreign_column'] => $object->{$this::PRIMARY_KEY},
+            ]
+        );
+
+        if (!empty($rows)) {
+            $mapper = new $mapping['mapper']();
+            foreach ($rows as $row) {
+                $objects[] = $mapper->load($row[$mapping['mapper_column']]);
+            }
+        }
+        $this->setValue(
+            $object,
+            $property,
+            [$property => $objects],
+            $mapping
+        );
 
         return $object;
     }
@@ -251,80 +339,17 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * Saves relations
      *
      * @param  object $object Object containing the relations
+     *
      * @return object
      */
-    protected function saveRelations($object) {
+    protected function saveRelations(object $object): object {
         foreach ($this::MAPPING as $property => $mapping) {
-            if (!empty($mapping['mapper']) && !empty($mapping['lookup'])) {
+            if (!empty($mapping['mapper'])) {
+                $object = $this->saveRelationalObjects($object, $property, $mapping);
 
-                // load values in the lookup table
-                $rows = $this->crud->read(
-                    $mapping['lookup']['table'],
-                    [
-                        $mapping['lookup']['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
-                    ]
-                );
-
-                // save current object values
-                $mapper = new $mapping['mapper']();
-
-                $objects = $this->getValue($object, $property, $mapping);
-
-                foreach ($objects as $key => $obj) {
-                    $objects[$key] = $mapper->save($obj);
-                }
-
-                $this->setValue(
-                    $object,
-                    $property,
-                    [
-                        $property => $objects,
-                    ],
-                    $mapping
-                );
-
-                // determine how to alter the lookup table
-                $add = [];
-                foreach ($objects as $obj) {
-                    $found = false;
-                    foreach ($rows as $key => $row) {
-                        if ($row[$mapping['lookup']['mapper_column']] == $obj->{$mapper::PRIMARY_KEY}) {
-                            // found a match. remove it from the db rows
-                            $found = true;
-                            unset($rows[$key]);
-                            break;
-                        }
-                    }
-                    if (!$found) {
-                        // if we don't find a match, add the object
-                        $add[] = $obj;
-                    }
-                }
-
-                if (!empty($rows)) {
-                    // delete lookup rows that are no longer needed
-                    $pk_values = [];
-                    foreach ($rows as $row) {
-                        $pk_values[] = $row[$mapping['lookup']['primary_key']];
-                    }
-                    $this->crud->delete(
-                        $mapping['lookup']['table'],
-                        [
-                            $mapping['lookup']['primary_key'] => $pk_values,
-                        ]
-                    );
-                }
-
-                if (!empty($add)) {
-                    // add new relational data
-                    foreach ($add as $obj) {
-                        $this->crud->create(
-                            $mapping['lookup']['table'],
-                            [
-                                $mapping['lookup']['mapper_column']  => $obj->{$mapper::PRIMARY_KEY},
-                                $mapping['lookup']['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
-                            ]
-                        );
+                if (!empty($mapping['type'])) {
+                    if ($mapping['type'] == 'lookup') {
+                        $object = $this->saveLookupRelations($object, $property, $mapping);
                     }
                 }
             }
@@ -342,7 +367,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      *
      * @return array
      */
-    protected function getData($object) {
+    protected function getData($object): array {
         $data = [];
         foreach ($this::MAPPING as $property => $mapping) {
             if (empty($mapping['mapper'])) {
@@ -351,5 +376,129 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         }
 
         return $data;
+    }
+
+    /**
+     * Saves relational data that is stored in a lookup (aka xref) table.
+     *
+     * @param      object  $object    The object
+     * @param      string  $property  The property
+     * @param      array   $mapping   The mapping
+     *
+     * @return     object
+     */
+    protected function saveLookupRelations(object $object, string $property, array $mapping): object {
+        $mapper = new $mapping['mapper']();
+
+        $objects = $this->getValue($object, $property, $mapping);
+
+        // load values in the lookup table
+        $rows = $this->crud->read(
+            $mapping['table'],
+            [
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
+            ]
+        );
+
+        // determine how to alter the lookup table
+        $add = [];
+        foreach ($objects as $obj) {
+            $found = false;
+            foreach ($rows as $key => $row) {
+                if ($row[$mapping['mapper_column']] == $obj->{$mapper::PRIMARY_KEY}) {
+                    // found a match. remove it from the db rows
+                    $found = true;
+                    unset($rows[$key]);
+                    break;
+                }
+            }
+            if (!$found) {
+                // if we don't find a match, add the object
+                $add[] = $obj;
+            }
+        }
+
+        if (!empty($rows)) {
+            // delete lookup rows that are no longer needed
+            $pk_values = [];
+            foreach ($rows as $row) {
+                $pk_values[] = $row[$mapping['primary_key']];
+            }
+            $this->crud->delete(
+                $mapping['table'],
+                [
+                    $mapping['primary_key'] => $pk_values,
+                ]
+            );
+        }
+
+        if (!empty($add)) {
+
+            // add new relational data
+            foreach ($add as $obj) {
+                $this->crud->create(
+                    $mapping['table'],
+                    [
+                        $mapping['mapper_column']  => $obj->{$mapper::PRIMARY_KEY},
+                        // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                        $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
+                    ]
+                );
+            }
+        }
+
+        return $object;
+    }
+
+    /**
+     * Saves relational objects.
+     *
+     * @param      object  $object    The object
+     * @param      string  $property  The property
+     * @param      array   $mapping   The mapping
+     *
+     * @return     object
+     */
+    protected function saveRelationalObjects(object $object, string $property, array $mapping): object {
+
+        // save current object values
+        $mapper = new $mapping['mapper']();
+
+        $objects = $this->getValue($object, $property, $mapping);
+
+        foreach ($objects as $key => $obj) {
+            $prop = $mapping['foreign_property'] ?? $mapping['foreign_column'] ?? null;
+            if (property_exists($object, $prop)) {
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                $obj->{$prop} = $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]);
+            }
+
+            $objects[$key] = $mapper->save($obj);
+        }
+
+        $this->setValue(
+            $object,
+            $property,
+            [
+                $property => $objects,
+            ],
+            $mapping
+        );
+
+        return $object;
+    }
+
+    /**
+     * Returns the "where" data to use when updating a row
+     *
+     * @param      object  $object  The object
+     *
+     * @return     array   The update constraint.
+     */
+    protected function getUpdateConstraint(object $object): array {
+        return [
+            $this::PRIMARY_KEY => $object->{$this::PRIMARY_KEY},
+        ];
     }
 }
