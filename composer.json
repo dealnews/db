@@ -10,8 +10,8 @@
     },
     "require": {
         "php": "^8.0",
-        "dealnews/get-config": "^2.0",
-        "dealnews/data-mapper": "^2.1"
+        "dealnews/data-mapper": "^3.0",
+        "dealnews/get-config": "^2.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.38",
