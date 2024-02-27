@@ -4,6 +4,9 @@ namespace DealNews\DB\Tests\Util\Search;
 
 use DealNews\DB\Util\Search\Text;
 
+/**
+ * @group unit
+ */
 class TextTest extends \PHPUnit\Framework\TestCase {
 
     /**

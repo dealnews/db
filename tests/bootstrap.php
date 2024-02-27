@@ -15,7 +15,14 @@ define('INTEGRATION_TESTS', empty($opts['group']) || in_array('integration', $op
  * does not allow var_dump to send output to STDOUT.
  */
 function _debug() {
+    $bt = debug_backtrace();
     fwrite(STDERR, "\nSTART DEBUG\n");
+    foreach ($bt as $pos => $t) {
+        if (!isset($t['file'])) {
+            break;
+        }
+        fwrite(STDERR, "#$pos {$t['file']} on line {$t['line']}\n");
+    }
     fwrite(STDERR, "###########\n");
     $args = func_get_args();
     foreach ($args as $arg) {
@@ -51,14 +58,28 @@ if (trim(`which docker`) === '') {
     $pgsql_host = 'db-pgsql-sandbox';
     $pgsql_port = 5432;
 } else {
-    /* Start daemons for testing. */
-    passthru(__DIR__ . '/setup.sh');
 
-    register_shutdown_function(function () {
-        if (empty(getenv('KEEPCONTAINERS'))) {
-            passthru(__DIR__ . '/teardown.sh');
+    $start_sandbox = true;
+
+    $opts = getopt('', ['group:']);
+    if (!empty($opts['group'])) {
+        $groups = explode(',', $opts['group']);
+        if (!in_array('functional', $groups)) {
+            $start_sandbox = false;
         }
-    });
+    }
+
+    if ($start_sandbox) {
+
+        /* Start daemons for testing. */
+        passthru(__DIR__ . '/setup.sh');
+
+        register_shutdown_function(function () {
+            if (empty(getenv('KEEPCONTAINERS'))) {
+                passthru(__DIR__ . '/teardown.sh');
+            }
+        });
+    }
 
     $mysql_host = '127.0.0.1';
     $mysql_port = 43306;

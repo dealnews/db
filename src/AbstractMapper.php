@@ -253,7 +253,16 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     protected function loadRelations(object $object): object {
         foreach ($this::MAPPING as $property => $mapping) {
             if (!empty($mapping['mapper'])) {
-                if (!empty($mapping['type']) && $mapping['type'] == 'lookup') {
+                if (
+                    is_a($mapping['mapper'], ColumnMapper::class, true) ||
+                    is_subclass_of($mapping['mapper'], ColumnMapper::class, true)
+                ) {
+                    $object = $this->loadColumnMapper(
+                        $object,
+                        $property,
+                        $mapping
+                    );
+                } elseif (!empty($mapping['type']) && $mapping['type'] == 'lookup') {
                     $object = $this->loadLookupObjects(
                         $object,
                         $property,
@@ -285,7 +294,8 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $mapper  = new $mapping['mapper']();
         $objects = $mapper->find(
             [
-                $mapping['foreign_column'] => $object->{$this::PRIMARY_KEY},
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
             ]
         );
 
@@ -315,7 +325,8 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $rows    = $this->crud->read(
             $mapping['table'],
             [
-                $mapping['foreign_column'] => $object->{$this::PRIMARY_KEY},
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+                $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
             ]
         );
 
@@ -336,6 +347,37 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     }
 
     /**
+     * Loads a column mapper.
+     *
+     * @param      object    $object    The object
+     * @param      string    $property  The property
+     * @param      array     $mapping   The mapping
+     *
+     * @return     object
+     */
+    protected function loadColumnMapper(object $object, string $property, array $mapping): object {
+        $mapper = new ($mapping['mapper'])(
+            $mapping['table'],
+            $mapping['primary_key'],
+            $mapping['foreign_column'],
+            $mapping['column'],
+            $this->crud
+        );
+
+        // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+        $data = $mapper->load($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
+
+        $this->setValue(
+            $object,
+            $property,
+            [$property => $data],
+            $mapping
+        );
+
+        return $object;
+    }
+
+    /**
      * Saves relations
      *
      * @param  object $object Object containing the relations
@@ -345,37 +387,25 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     protected function saveRelations(object $object): object {
         foreach ($this::MAPPING as $property => $mapping) {
             if (!empty($mapping['mapper'])) {
-                $object = $this->saveRelationalObjects($object, $property, $mapping);
 
-                if (!empty($mapping['type'])) {
-                    if ($mapping['type'] == 'lookup') {
-                        $object = $this->saveLookupRelations($object, $property, $mapping);
+                if (
+                    is_a($mapping['mapper'], ColumnMapper::class, true) ||
+                    is_subclass_of($mapping['mapper'], ColumnMapper::class, true)
+                ) {
+                    $object = $this->saveColumnMapper($object, $property, $mapping);
+                } else {
+                    $object = $this->saveRelationalObjects($object, $property, $mapping);
+
+                    if (!empty($mapping['type'])) {
+                        if ($mapping['type'] == 'lookup') {
+                            $object = $this->saveLookupRelations($object, $property, $mapping);
+                        }
                     }
                 }
             }
         }
 
         return $object;
-    }
-
-    /**
-     * Builds a data array for insertion into the database using the object
-     * properties. This can be overridden by a child class when more complex
-     * work needs to be done.
-     *
-     * @param object $object
-     *
-     * @return array
-     */
-    protected function getData($object): array {
-        $data = [];
-        foreach ($this::MAPPING as $property => $mapping) {
-            if (empty($mapping['mapper'])) {
-                $data[$property] = $this->getValue($object, $property, $mapping);
-            }
-        }
-
-        return $data;
     }
 
     /**
@@ -487,6 +517,53 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         );
 
         return $object;
+    }
+
+    protected function saveColumnMapper(object $object, string $property, array $mapping): object {
+        $mapper = new ($mapping['mapper'])(
+            $mapping['table'],
+            $mapping['primary_key'],
+            $mapping['foreign_column'],
+            $mapping['column'],
+            $this->crud
+        );
+
+        $data = $this->getValue($object, $property, $mapping);
+
+        $data = $mapper->save(
+            // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
+            $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
+            $data
+        );
+
+        $this->setValue(
+            $object,
+            $property,
+            [$property => $data],
+            $mapping
+        );
+
+        return $object;
+    }
+
+    /**
+     * Builds a data array for insertion into the database using the object
+     * properties. This can be overridden by a child class when more complex
+     * work needs to be done.
+     *
+     * @param object $object
+     *
+     * @return array
+     */
+    protected function getData($object): array {
+        $data = [];
+        foreach ($this::MAPPING as $property => $mapping) {
+            if (empty($mapping['mapper'])) {
+                $data[$property] = $this->getValue($object, $property, $mapping);
+            }
+        }
+
+        return $data;
     }
 
     /**

@@ -34,9 +34,9 @@ class StudentMapper extends \DealNews\DB\AbstractMapper {
      * @var array
      */
     public const MAPPING = [
-        'student_id' => [],
-        'name'       => [],
-        'courses'    => [
+        'student_id'  => [],
+        'name'        => [],
+        'courses'     => [
             'mapper'         => 'DealNews\\DB\\Tests\\TestClasses\\Mapper\\CourseMapper',
             'type'           => 'lookup',
             'table'          => 'student_course_xref',
@@ -44,11 +44,18 @@ class StudentMapper extends \DealNews\DB\AbstractMapper {
             'foreign_column' => 'student_id',
             'mapper_column'  => 'course_id',
         ],
-        'assignments'    => [
+        'assignments' => [
             'mapper'         => 'DealNews\\DB\\Tests\\TestClasses\\Mapper\\AssignmentMapper',
             'table'          => 'assignments',
             'primary_key'    => 'assignment_id',
             'foreign_column' => 'student_id',
+        ],
+        'nicknames'   => [
+            'mapper'         => 'DealNews\\DB\\ColumnMapper',
+            'table'          => 'student_nicknames',
+            'primary_key'    => 'student_nickname_id',
+            'foreign_column' => 'student_id',
+            'column'         => 'name',
         ],
     ];
 }

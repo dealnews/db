@@ -11,7 +11,7 @@ use \DealNews\DB\Tests\TestClasses\Mapper\StudentMapper;
 use \DealNews\DB\Tests\TestClasses\Student;
 
 /**
- * @group integration
+ * @group unit
  */
 class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
 
@@ -176,14 +176,23 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
 
         $student->courses[0]->name = 'Course 1a';
 
-        unset($student->courses[1]);
+        unset($student->courses[1], $student->nicknames[1]);
+
+
 
         $mapper  = new StudentMapper();
-        $student = $mapper->save($student);
+        $mapper->save($student);
+
+        $student = $mapper->load($student->student_id);
 
         $this->assertEquals(
             'Course 1a',
             $student->courses[0]->name
+        );
+
+        $this->assertEquals(
+            ['St1'],
+            $student->nicknames
         );
     }
 
@@ -203,6 +212,10 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
                 $course1,
                 $course2,
             ];
+            $student->nicknames = [
+                'St1',
+                'Student One',
+            ];
 
             $assignment       = new Assignment();
             $assignment->name = 'Assignment 1';
@@ -212,6 +225,35 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
             $mapper = new StudentMapper();
 
             $student = $mapper->save($student);
+
+            $this->assertEquals(
+                [
+                    'student_id' => 1,
+                    'name'       => 'Student 1',
+                    'courses'    => [
+                         [
+                            'course_id' => 1000004,
+                            'name'      => 'Course 1',
+                        ],
+                         [
+                            'course_id' => 1000005,
+                            'name'      => 'Course 2',
+                        ],
+                    ],
+                    'assignments' => [
+                         [
+                            'assignment_id' => 1,
+                            'student_id'    => 1,
+                            'name'          => 'Assignment 1',
+                        ],
+                    ],
+                    'nicknames' => [
+                        'St1',
+                        'Student One',
+                    ],
+                ],
+                json_decode(json_encode($student), true)
+            );
         }
 
         return $student;

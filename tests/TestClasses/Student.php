@@ -36,4 +36,10 @@ class Student {
      * @var array
      */
     public $assignments = [];
+
+    /**
+     * Array of nicknames
+     * @var array
+     */
+    public array $nicknames = [];
 }
