@@ -55,7 +55,7 @@ class StudentMapper extends \DealNews\DB\AbstractMapper {
             'table'          => 'student_nicknames',
             'primary_key'    => 'student_nickname_id',
             'foreign_column' => 'student_id',
-            'column'         => 'name'
+            'column'         => 'name',
         ],
     ];
 }

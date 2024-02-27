@@ -176,9 +176,9 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
 
         $student->courses[0]->name = 'Course 1a';
 
-        unset($student->courses[1]);
+        unset($student->courses[1], $student->nicknames[1]);
 
-        unset($student->nicknames[1]);
+
 
         $mapper  = new StudentMapper();
         $mapper->save($student);

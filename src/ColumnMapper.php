@@ -17,37 +17,49 @@ class ColumnMapper {
      */
     protected CRUD $crud;
 
+    /**
+     * The table with the values
+     */
     protected string $table = '';
+
+    /**
+     * The primary key for the table
+     */
     protected string $primary_key = '';
+
+    /**
+     * The column that has the foreign object pk in it
+     */
     protected string $foreign_column = '';
+
+    /**
+     * The column we want to return in the array
+     */
     protected string $column = '';
 
 
     /**
-     * Creates a new mapper
+     * Constructs a new instance.
      *
-     * @param \DealNews\DB\CRUD|null $crud Optional CRUD object
+     * @param      string  $table           The table
+     * @param      string  $primary_key     The primary key
+     * @param      string  $foreign_column  The foreign column
+     * @param      string  $column          The column
+     * @param      CRUD    $crud            The crud
      */
     public function __construct(
         string $table,
         string $primary_key,
         string $foreign_column,
         string $column,
-        CRUD $crud = null
+        CRUD $crud
     ) {
 
         $this->table          = $table;
         $this->primary_key    = $primary_key;
         $this->foreign_column = $foreign_column;
         $this->column         = $column;
-
-        if ($crud !== null) {
-            $this->crud = $crud;
-        } elseif (!empty($this::DATABASE_NAME)) {
-            $this->crud = new CRUD(\DealNews\DB\Factory::init($this::DATABASE_NAME));
-        } else {
-            throw new \LogicException('No database configuration for ' . get_class($this));
-        }
+        $this->crud           = $crud;
     }
 
     /**
@@ -63,7 +75,7 @@ class ColumnMapper {
         $rows = $this->crud->read(
             $this->table,
             [
-                $this->foreign_column => $id
+                $this->foreign_column => $id,
             ],
             order: $this->column
         );
@@ -84,6 +96,8 @@ class ColumnMapper {
      * @return array
      */
     public function save(int|string $id, array $data): array {
+        $success = true;
+
         $already_in_transaction = $this->crud->pdo->inTransaction();
 
         if (!$already_in_transaction) {
@@ -95,40 +109,46 @@ class ColumnMapper {
             $existing = $this->crud->read(
                 $this->table,
                 [
-                    $this->foreign_column => $id
+                    $this->foreign_column => $id,
                 ]
             );
 
             foreach ($data as $dk => $value) {
                 foreach ($existing as $ek => $row) {
                     if ($row[$this->column] == $value) {
-                        unset($data[$dk]);
-                        unset($existing[$ek]);
+                        unset($data[$dk], $existing[$ek]);
+
                         break;
                     }
                 }
             }
 
             foreach ($data as $value) {
-                $this->crud->create(
+                $success = $this->crud->create(
                     $this->table,
                     [
                         $this->column         => $value,
                         $this->foreign_column => $id,
                     ]
                 );
+                if (!$success) {
+                    break;
+                }
             }
 
-            foreach ($existing as $ex) {
-                $this->crud->delete(
-                    $this->table,
-                    [
-                        $this->primary_key => $ex[$this->primary_key],
-                    ]
-                );
+            if ($success) {
+                foreach ($existing as $ex) {
+                    $success = $this->crud->delete(
+                        $this->table,
+                        [
+                            $this->primary_key => $ex[$this->primary_key],
+                        ]
+                    );
+                    if (!$success) {
+                        break;
+                    }
+                }
             }
-
-            $data = $this->load($id);
 
         } catch (\PDOException $e) {
             if (!$already_in_transaction) {
@@ -144,6 +164,8 @@ class ColumnMapper {
                 $this->crud->pdo->rollBack();
             }
         }
+
+        $data = $this->load($id);
 
         return $data;
     }

@@ -294,6 +294,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $mapper  = new $mapping['mapper']();
         $objects = $mapper->find(
             [
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
             ]
         );
@@ -324,6 +325,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $rows    = $this->crud->read(
             $mapping['table'],
             [
+                // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $mapping['foreign_column'] => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
             ]
         );
@@ -362,6 +364,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
             $this->crud
         );
 
+        // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
         $data = $mapper->load($this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]));
 
         $this->setValue(
@@ -528,6 +531,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         $data = $this->getValue($object, $property, $mapping);
 
         $data = $mapper->save(
+            // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
             $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
             $data
         );
