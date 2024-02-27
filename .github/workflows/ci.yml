@@ -1,6 +1,6 @@
-name: Testing DealNews\GetConfig
+name: Testing DealNews\DB
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   test:
