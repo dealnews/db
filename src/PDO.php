@@ -163,6 +163,26 @@ class PDO {
     }
 
     /**
+     * Destroys the object.
+     */
+    public function __destruct() {
+        $this->close();
+    }
+
+    /**
+     * Closes the connection by setting the PDO object to null
+     *
+     * @see https://www.php.net/manual/en/pdo.connections.php
+     *
+     * @return bool
+     */
+    public function close(): bool {
+        $this->pdo = null;
+
+        return true;
+    }
+
+    /**
      * Connects to the database by creating the real \PDO object
      *
      * @param  boolean $reconnect If true, a new object will be created

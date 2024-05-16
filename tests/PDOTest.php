@@ -90,7 +90,29 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
+    public function testClose() {
+        $config = Factory::loadConfig(Factory::getConfig('mytestdb'));
+
+        MockPDO::$mock_attempt_count = 0;
+        MockPDO::$mock_throw         = false;
+        $pdo                         = new class($config['dsn'], $config['user'], $config['pass'], $config['options']) extends \DealNews\DB\PDO {
+            public function connect($reconnect = false, ?string $pdo_class = \PDO::class) {
+                parent::connect($reconnect, MockPDO::class);
+            }
+        };
+        $this->assertTrue($pdo->ping());
+        $this->assertEquals(1, MockPDO::$mock_attempt_count);
+        $this->assertTrue($pdo->ping());
+        $this->assertEquals(1, MockPDO::$mock_attempt_count);
+
+        $pdo->close();
+        $this->assertTrue($pdo->ping());
+        $this->assertEquals(2, MockPDO::$mock_attempt_count);
+    }
+
     public function testConnect() {
+        MockPDO::$mock_attempt_count = 0;
+        MockPDO::$mock_throw         = true;
         $pdo = new \DealNews\DB\PDO('foo:bar');
         $pdo->connect(true, MockPDO::class);
         $this->assertEquals(2, MockPDO::$mock_attempt_count);
@@ -111,10 +133,16 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
 class MockPDO extends \PDO {
     public static int $mock_attempt_count = 0;
 
-    public function __construct() {
+    public static $mock_throw = true;
+
+    public function __construct(string $dsn, ?string $username = '', ?string $passwd = '', ?array $options = []) {
         self::$mock_attempt_count++;
-        if (self::$mock_attempt_count <= 1) {
-            throw new \PDOException('Test Exception', 0);
+        if (self::$mock_throw) {
+            if (self::$mock_attempt_count <= 1) {
+                throw new \PDOException('Test Exception', 0);
+            }
+        } else {
+            parent::__construct($dsn, $username, $passwd, $options);
         }
     }
 }
