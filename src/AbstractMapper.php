@@ -499,7 +499,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
 
         foreach ($objects as $key => $obj) {
             $prop = $mapping['foreign_property'] ?? $mapping['foreign_column'] ?? null;
-            if (property_exists($object, $prop)) {
+            if (property_exists($obj, $prop)) {
                 // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $obj->{$prop} = $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]);
             }

@@ -84,9 +84,11 @@ class PDOStatement {
             // if we get here, we didn't get true in $result
             if ($x >= PDO::RETRY_LIMIT || !$this->pdo->checkErrorCode($this->stmt->errorCode())) {
                 if (isset($result) && is_object($result)) {
+                    throw $result;
+                } else {
                     throw new \PDOException(
-                        "Attempted run query $x times and failed: " . $result->getMessage(),
-                        $result->getCode(),
+                        "Attempted run query $x times and failed",
+                        999,
                         $result
                     );
                 }
