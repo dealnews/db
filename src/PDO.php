@@ -180,11 +180,7 @@ class PDO {
                 } catch (\PDOException $e) {
                     // add logging for failures
                     if ($x >= $this::RETRY_LIMIT) {
-                        throw new \PDOException(
-                            "Attempted to connect $x times and failed: " . $e->getMessage(),
-                            $e->getCode(),
-                            $e
-                        );
+                        throw $e;
                     }
                 }
             }
@@ -239,11 +235,7 @@ class PDO {
                 );
             } catch (\PDOException $e) {
                 if ($x >= $this::RETRY_LIMIT || !$this->checkErrorCode($e->getCode())) {
-                    throw new \PDOException(
-                        "Attempted to connect $x times and failed: " . $e->getMessage(),
-                        (int)$e->getCode(),
-                        $e
-                    );
+                    throw $e;
                 }
             }
         }
@@ -285,11 +277,7 @@ class PDO {
                 }
             } catch (\PDOException $e) {
                 if ($x >= $this::RETRY_LIMIT || !$this->checkErrorCode($e->getCode())) {
-                    throw new \PDOException(
-                        "Attempted to connect $x times and failed: " . $e->getMessage(),
-                        $e->getCode(),
-                        $e
-                    );
+                    throw $e;
                 }
             }
         }
