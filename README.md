@@ -1,5 +1,6 @@
 # DealNews Datbase Library
 
+
 ## Factory
 
 The factory creates PDO objects using \DealNews\GetConfigto
