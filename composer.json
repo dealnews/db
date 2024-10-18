@@ -8,6 +8,9 @@
         "discard-changes": true,
         "sort-packages": true
     },
+    "bin": [
+        "bin/create_objects.php"
+    ],
     "require": {
         "php": "^8.0",
         "dealnews/data-mapper": "^3.1.1",
