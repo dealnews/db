@@ -74,7 +74,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      *
      * @param \DealNews\DB\CRUD|null $crud Optional CRUD object
      */
-    public function __construct(CRUD $crud = null) {
+    public function __construct(?CRUD $crud = null) {
         if ($crud !== null) {
             $this->crud = $crud;
         } elseif (!empty($this::DATABASE_NAME)) {

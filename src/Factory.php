@@ -36,7 +36,7 @@ class Factory {
      * @throws \PDOException
      * @throws \LogicException
      */
-    public static function init(string $db, array $options = null, string $type = null): PDO {
+    public static function init(string $db, ?array $options = null, ?string $type = null): PDO {
         static $objs = [];
 
         if (!empty($type)) {
@@ -91,7 +91,7 @@ class Factory {
      * @throws \LogicException
      * @throws \UnexpectedValueException
      */
-    public static function loadConfig(array $config, array $options = null, string $type = null): array {
+    public static function loadConfig(array $config, ?array $options = null, ?string $type = null): array {
         if (empty($config['server']) && empty($config['dsn'])) {
             throw new \LogicException('Either `server` or `dsn` is required', 3);
         } elseif (!empty($config['server'])) {
@@ -157,7 +157,7 @@ class Factory {
      * @return array
      * @throws \LogicException
      */
-    public static function getConfig(string $db, GetConfig $cfg = null): array {
+    public static function getConfig(string $db, ?GetConfig $cfg = null): array {
         if (empty($cfg)) {
             $cfg = new GetConfig();
         }
