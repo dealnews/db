@@ -138,7 +138,9 @@ foreach($schema as $column) {
     ];
 }
 
-$object_name = str_replace(' ', '', ucwords(str_replace('_', ' ', $opts['table'])));
+$object_name = rtrim(str_replace(' ', '', ucwords(str_replace('_', ' ', $opts['table']))), 's');
+
+
 
 create_value_object($properties, $opts['namespace'], $object_name, $opts['base-class'], $opts['schema'], $opts['table'], $opts['dir']);
 create_mapper($properties, $opts['namespace'], $object_name, $opts['base-class'], $opts['schema'], $opts['table'], $opts['dir'], $primary_key);
