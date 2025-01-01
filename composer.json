@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": "^8.0",
-        "dealnews/data-mapper": "^3.1.1",
+        "dealnews/data-mapper": "^3.3.0",
         "dealnews/get-config": "^2.0"
     },
     "require-dev": {
