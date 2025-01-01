@@ -127,10 +127,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      *
      * @return     array|null
      */
-    public function find(array $filter): ?array {
+    public function find(array $filter, ?int $limit = null, ?int $start = null, array $fields = ['*'], string $order = ''): ?array {
         $objects = null;
 
-        $data = $this->crud->read($this::TABLE, $filter);
+        $data = $this->crud->read($this::TABLE, $filter, $limit, $start, $fields, $order);
 
         if (!empty($data)) {
             foreach ($data as $row) {
