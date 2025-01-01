@@ -124,6 +124,9 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @param      array       $filter  Array of filters where the keys are column
      *                                  names and the values are column values to
      *                                  filter upon.
+     * @param      int|null    $limit   Number of matches to return
+     * @param      int|null    $start   Start position
+     * @param      string      $order   The order of returned matches
      *
      * @return     array|null
      */
