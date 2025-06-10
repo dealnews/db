@@ -9,6 +9,13 @@ use DealNews\DB\Util\Search\Text;
  */
 class TextTest extends \PHPUnit\Framework\TestCase {
 
+    public function testCreateLikeString() {
+        $text = Text::init();
+        $result = $text->createLikeString(['description'], 'foo (bar, baz) -boofar');
+        $expect = '(description LIKE \'%foo%\' AND (description LIKE \'%bar%\' AND description LIKE \'%baz%\') AND description NOT LIKE \'%boofar%\')';
+        $this->assertEquals($expect, $result);
+    }
+
     /**
      * @param array $fields
      * @param array $tokens

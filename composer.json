@@ -12,7 +12,7 @@
         "bin/create_objects.php"
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^8.1",
         "dealnews/data-mapper": "^3.3.0",
         "dealnews/get-config": "^2.0"
     },
