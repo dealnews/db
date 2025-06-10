@@ -61,7 +61,14 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * Defines the properties that are mapped and any
      * additional information needed to map them.
      */
-    protected const MAPPING = [];
+    public const MAPPING = [];
+
+    /**
+     * Table name including any prefix from the ini config
+     *
+     * @var string
+     */
+    public readonly string $table;
 
     /**
      * CRUD PDO helper object
@@ -78,9 +85,15 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         if ($crud !== null) {
             $this->crud = $crud;
         } elseif (!empty($this::DATABASE_NAME)) {
-            $this->crud = new CRUD(\DealNews\DB\Factory::init($this::DATABASE_NAME));
+            $this->crud = CRUD::factory($this::DATABASE_NAME);
         } else {
             throw new \LogicException('No database configuration for ' . get_class($this));
+        }
+        $prefix = Factory::getConfigValue($this::DATABASE_NAME, 'table_prefix');
+        if ($prefix) {
+            $this->table = "{$prefix}_" . $this::TABLE;
+        } else {
+            $this->table = $this::TABLE;
         }
     }
 
@@ -133,7 +146,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
     public function find(array $filter, ?int $limit = null, ?int $start = null, string $order = ''): ?array {
         $objects = null;
 
-        $data = $this->crud->read($this::TABLE, $filter, $limit, $start, order: $order);
+        $data = $this->crud->read($this->table, $filter, $limit, $start, order: $order);
 
         if (!empty($data)) {
             foreach ($data as $row) {
@@ -175,7 +188,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 }
             } else {
                 $existing = $this->crud->read(
-                    $this::TABLE,
+                    $this->table,
                     [
                         // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                         $this::PRIMARY_KEY => $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]),
@@ -187,7 +200,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
             }
 
             if ($insert) {
-                $success = $this->crud->create($this::TABLE, $data);
+                $success = $this->crud->create($this->table, $data);
                 if ($success) {
                     $this->setValue(
                         $object,
@@ -199,7 +212,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 }
             } else {
                 $success = $this->crud->update(
-                    $this::TABLE,
+                    $this->table,
                     $data,
                     $update_constraint
                 );
@@ -237,7 +250,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      */
     public function delete($id): bool {
         $success = $this->crud->delete(
-            $this::TABLE,
+            $this->table,
             [
                 $this::PRIMARY_KEY => $id,
             ]

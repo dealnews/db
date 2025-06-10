@@ -2,7 +2,7 @@
 
 namespace DealNews\DB;
 
-use \DealNews\GetConfig\GetConfig;
+use DealNews\GetConfig\GetConfig;
 
 /**
  * Database Object Factory
@@ -158,34 +158,20 @@ class Factory {
      * @throws \LogicException
      */
     public static function getConfig(string $db, ?GetConfig $cfg = null): array {
-        if (empty($cfg)) {
-            $cfg = new GetConfig();
-        }
-
-        // Check for an altername environment for this db
-        $prefix = $cfg->get('db.factory.prefix');
-
-        if (empty($prefix)) {
-            $prefix = static::DEFAULT_CONFIG_PREFIX;
-        }
-
-        if (!empty($prefix)) {
-            $prefix .= '.';
-        }
 
         $config = [
-            'type'        => $cfg->get($prefix . "$db.type"),
-            'db'          => $cfg->get($prefix . "$db.db"),
-            'user'        => $cfg->get($prefix . "$db.user"),
-            'pass'        => $cfg->get($prefix . "$db.pass"),
+            'type'        => self::getConfigValue($db, "type", $cfg),
+            'db'          => self::getConfigValue($db, "db", $cfg),
+            'user'        => self::getConfigValue($db, "user", $cfg),
+            'pass'        => self::getConfigValue($db, "pass", $cfg),
             // PDO only
-            'dsn'         => $cfg->get($prefix . "$db.dsn"),
-            'options'     => $cfg->get($prefix . "$db.options"),
+            'dsn'         => self::getConfigValue($db, "dsn", $cfg),
+            'options'     => self::getConfigValue($db, "options", $cfg),
             // pgsql and mysql only
-            'server'      => $cfg->get($prefix . "$db.server"),
-            'port'        => $cfg->get($prefix . "$db.port"),
+            'server'      => self::getConfigValue($db, "server", $cfg),
+            'port'        => self::getConfigValue($db, "port", $cfg),
             // mysql only
-            'charset'     => $cfg->get($prefix . "$db.charset"),
+            'charset'     => self::getConfigValue($db, "charset", $cfg),
         ];
 
         if (empty($config['db'])) {
@@ -193,5 +179,30 @@ class Factory {
         }
 
         return $config;
+    }
+
+    /**
+     * Gets a configuration value from GetConfig
+     *
+     * @param      string          $db       Database config name
+     * @param      string          $setting  The setting name
+     * @param      GetConfig|null  $cfg      Optional GetConfig object for testing
+     *
+     * @return     null|string                         The configuration value.
+     */
+    public static function getConfigValue(string $db, string $setting, ?GetConfig $cfg = null): string|null {
+
+        if (empty($cfg)) {
+            $cfg = GetConfig::init();
+        }
+
+        // Check for an altername prefix name
+        $prefix = (string)$cfg->get('db.factory.prefix');
+
+        if (empty($prefix)) {
+            $prefix = static::DEFAULT_CONFIG_PREFIX;
+        }
+
+        return $cfg->get("{$prefix}.{$db}.{$setting}");
     }
 }
