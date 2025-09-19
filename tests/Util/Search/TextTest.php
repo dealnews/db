@@ -10,7 +10,7 @@ use DealNews\DB\Util\Search\Text;
 class TextTest extends \PHPUnit\Framework\TestCase {
 
     public function testCreateLikeString() {
-        $text = Text::init();
+        $text   = Text::init();
         $result = $text->createLikeString(['description'], 'foo (bar, baz) -boofar');
         $expect = '(description LIKE \'%foo%\' AND (description LIKE \'%bar%\' AND description LIKE \'%baz%\') AND description NOT LIKE \'%boofar%\')';
         $this->assertEquals($expect, $result);
@@ -31,7 +31,7 @@ class TextTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals($expected, $results);
     }
 
-    public function createLikeStringFromTokensProvider() : array {
+    public static function createLikeStringFromTokensProvider() : array {
         return [
             'one field with two search terms' => [
                 'fields' => ['search_thing'],

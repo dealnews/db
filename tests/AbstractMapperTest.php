@@ -185,8 +185,9 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
 
         $student = $mapper->load($student->student_id);
 
+        // should not change
         $this->assertEquals(
-            'Course 1a',
+            'Course 1',
             $student->courses[0]->name
         );
 
@@ -200,11 +201,14 @@ class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
         static $student;
 
         if (!$student) {
+            $course_mapper = new CourseMapper();
             $course1       = new Course();
             $course1->name = 'Course 1';
+            $course1       = $course_mapper->save($course1);
 
             $course2       = new Course();
             $course2->name = 'Course 2';
+            $course2       = $course_mapper->save($course2);
 
             $student          = new Student();
             $student->name    = 'Student 1';

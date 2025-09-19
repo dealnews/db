@@ -4,7 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $opts = getopt('', ['group::']);
 
-if(isset($opts['group']) && strlen($opts['group']) > 0) {
+if (isset($opts['group']) && strlen($opts['group']) > 0) {
     $opts['group'] = explode(',', $opts['group']);
 }
 

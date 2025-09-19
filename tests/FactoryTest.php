@@ -25,7 +25,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      */
     public function testGetConfigEmptyDB() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
-                   ->setMethods(['get'])
+                   ->onlyMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
 
@@ -69,7 +69,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      */
     public function testGetConfigDefaultPrefix() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
-                   ->setMethods(['get'])
+                   ->onlyMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
 
@@ -113,7 +113,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
      */
     public function testGetConfigCustomPrefix() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
-                   ->setMethods(['get'])
+                   ->onlyMethods(['get'])
                    ->disableOriginalConstructor()
                    ->getMock();
 
@@ -164,7 +164,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function loadConfigData() {
+    public static function loadConfigData() {
         return [
             // Basic PDO config
             [
@@ -325,7 +325,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
-    public function buildData() {
+    public static function buildData() {
         // $type, $container, $dbname, $fixture
         return [
             'chinook' => [

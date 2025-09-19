@@ -410,12 +410,12 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 ) {
                     $object = $this->saveColumnMapper($object, $property, $mapping);
                 } else {
-                    $object = $this->saveRelationalObjects($object, $property, $mapping);
-
                     if (!empty($mapping['type'])) {
                         if ($mapping['type'] == 'lookup') {
                             $object = $this->saveLookupRelations($object, $property, $mapping);
                         }
+                    } else {
+                        $object = $this->saveRelationalObjects($object, $property, $mapping);
                     }
                 }
             }
