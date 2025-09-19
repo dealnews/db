@@ -49,7 +49,7 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals($reconnect, $class->reconnect);
     }
 
-    public function errorCodeData() {
+    public static function errorCodeData() {
         return [
             'MySQL Retry Only' => [
                 1422,
@@ -113,7 +113,7 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
     public function testConnect() {
         MockPDO::$mock_attempt_count = 0;
         MockPDO::$mock_throw         = true;
-        $pdo = new \DealNews\DB\PDO('foo:bar');
+        $pdo                         = new \DealNews\DB\PDO('foo:bar');
         $pdo->connect(true, MockPDO::class);
         $this->assertEquals(2, MockPDO::$mock_attempt_count);
     }

@@ -160,18 +160,18 @@ class Factory {
     public static function getConfig(string $db, ?GetConfig $cfg = null): array {
 
         $config = [
-            'type'        => self::getConfigValue($db, "type", $cfg),
-            'db'          => self::getConfigValue($db, "db", $cfg),
-            'user'        => self::getConfigValue($db, "user", $cfg),
-            'pass'        => self::getConfigValue($db, "pass", $cfg),
+            'type'        => self::getConfigValue($db, 'type', $cfg),
+            'db'          => self::getConfigValue($db, 'db', $cfg),
+            'user'        => self::getConfigValue($db, 'user', $cfg),
+            'pass'        => self::getConfigValue($db, 'pass', $cfg),
             // PDO only
-            'dsn'         => self::getConfigValue($db, "dsn", $cfg),
-            'options'     => self::getConfigValue($db, "options", $cfg),
+            'dsn'         => self::getConfigValue($db, 'dsn', $cfg),
+            'options'     => self::getConfigValue($db, 'options', $cfg),
             // pgsql and mysql only
-            'server'      => self::getConfigValue($db, "server", $cfg),
-            'port'        => self::getConfigValue($db, "port", $cfg),
+            'server'      => self::getConfigValue($db, 'server', $cfg),
+            'port'        => self::getConfigValue($db, 'port', $cfg),
             // mysql only
-            'charset'     => self::getConfigValue($db, "charset", $cfg),
+            'charset'     => self::getConfigValue($db, 'charset', $cfg),
         ];
 
         if (empty($config['db'])) {

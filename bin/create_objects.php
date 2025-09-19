@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-if(file_exists(__DIR__ . '/../vendor/autoload.php')) {
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require __DIR__ . '/../vendor/autoload.php';
 } elseif (file_exists(__DIR__ . '/../../../autoload.php')) {
     require __DIR__ . '/../../../autoload.php';
@@ -17,7 +17,7 @@ $opts = getopt('', [
     'base-class:',
 ]);
 
-if(!empty($opts['ini-file'])) {
+if (!empty($opts['ini-file'])) {
     putenv('DN_INI_FILE=' . $opts['ini-file']);
 }
 
@@ -44,8 +44,8 @@ $sql = "select
         from 
             information_schema.columns
         where 
-            table_schema='{$opts["schema"]}' and 
-            table_name='{$opts["table"]}'";
+            table_schema='{$opts['schema']}' and 
+            table_name='{$opts['table']}'";
 
 $schema = $db->runFetch($sql);
 
@@ -55,8 +55,8 @@ $sql = "select
         from
             information_schema.key_column_usage
         where
-            table_schema='{$opts["schema"]}' and
-            table_name='{$opts["table"]}'
+            table_schema='{$opts['schema']}' and
+            table_name='{$opts['table']}'
         order by
             constraint_name,
             ordinal_position";
@@ -65,7 +65,7 @@ $keys = $db->runFetch($sql);
 
 $primary_key = '';
 
-foreach($keys as $key) {
+foreach ($keys as $key) {
     if ($driver === 'mysql' && $key['constraint_name'] == 'PRIMARY') {
         $primary_key = $key['column_name'];
         break;
@@ -77,7 +77,7 @@ foreach($keys as $key) {
 
 $properties = [];
 
-foreach($schema as $column) {
+foreach ($schema as $column) {
 
     switch ($column['data_type']) {
 
@@ -87,12 +87,12 @@ foreach($schema as $column) {
         case 'bigint':
         case 'tinyint':
         case 'year':
-            $type = 'int';
+            $type        = 'int';
             $def_default = 0;
             break;
 
         case 'boolean':
-            $type = 'bool';
+            $type        = 'bool';
             $def_default = true;
             break;
 
@@ -101,17 +101,17 @@ foreach($schema as $column) {
         case 'real':
         case 'decimal':
         case 'double':
-            $type = 'float';
+            $type        = 'float';
             $def_default = 0.00;
             break;
 
         default:
-            $type = 'string';
+            $type        = 'string';
             $def_default = '';
     }
 
     if (strtoupper($column['is_nullable']) === 'YES') {
-        $type = "?$type";
+        $type    = "?$type";
         $default = null;
     } else {
         $default = $def_default;
@@ -133,7 +133,7 @@ foreach($schema as $column) {
     }
 
     $properties[$column['column_name']] = [
-        'type' => $type,
+        'type'    => $type,
         'default' => $default,
     ];
 }
@@ -170,9 +170,9 @@ function create_value_object($properties, $namespace, $object_name, $base_class,
         if ($settings['default'] === null) {
             $default = 'null';
         } elseif ($settings['type'] === 'string' || $settings['type'] === '?string') {
-            $default = "'{$settings["default"]}'";
+            $default = "'{$settings['default']}'";
         } else {
-            $default = $settings["default"];
+            $default = $settings['default'];
         }
 
         $file .= "    /**\n";
@@ -216,7 +216,7 @@ function create_mapper($properties, $namespace, $object_name, $base_class, $sche
     $file .= "\n";
     $file .= "namespace $namespace\\Mapper;\n";
     $file .= "\n";
-    $file .= "class $object_name extends \DealNews\DB\AbstractMapper {\n";
+    $file .= "class $object_name extends \\DealNews\\DB\\AbstractMapper {\n";
     $file .= "\n";
     $file .= "    /**\n";
     $file .= "     * Table name\n";
