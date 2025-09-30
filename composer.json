@@ -33,7 +33,7 @@
     },
     "scripts": {
         "phan": [
-            "docker run --rm -e PHAN_DISABLE_XDEBUG_WARN=1 -v `pwd`:/mnt/src -w /mnt/src phanphp/phan:5 -p"
+            "phan"
         ],
         "test": [
             "parallel-lint src/ tests/",

@@ -1,8 +1,7 @@
 <?php
 
 $finder = (new PhpCsFixer\Finder())
-    ->in(__DIR__)
-;
+    ->in(__DIR__);
 
 return (new PhpCsFixer\Config())
     ->setRules([
@@ -11,18 +10,18 @@ return (new PhpCsFixer\Config())
             'syntax' => 'short',
         ],
         'binary_operator_spaces'                      => [
-            'default'            => 'align_single_space',
+            'default' => 'align_single_space',
         ],
         'blank_line_after_opening_tag'                => true,
         'blank_line_before_statement'                 => ['statements' => ['return']],
         'braces_position'                             => [
-            'allow_single_line_anonymous_functions' => true,
+            'allow_single_line_anonymous_functions'     => true,
             'allow_single_line_empty_anonymous_classes' => true,
-            'anonymous_classes_opening_brace' => 'same_line',
-            'anonymous_functions_opening_brace' => 'same_line',
-            'classes_opening_brace' => 'same_line',
-            'control_structures_opening_brace' => 'same_line',
-            'functions_opening_brace' => 'same_line',
+            'anonymous_classes_opening_brace'           => 'same_line',
+            'anonymous_functions_opening_brace'         => 'same_line',
+            'classes_opening_brace'                     => 'same_line',
+            'control_structures_opening_brace'          => 'same_line',
+            'functions_opening_brace'                   => 'same_line',
         ],
         'combine_consecutive_unsets'                  => true,
         'concat_space'                                => [
@@ -36,7 +35,6 @@ return (new PhpCsFixer\Config())
         'function_typehint_space'                     => true,
         'include'                                     => true,
         'lowercase_cast'                              => true,
-//        'class_attributes_separation'                 => ['elements' => ['method']],
         'native_function_casing'                      => true,
         'no_blank_lines_after_phpdoc'                 => true,
         'no_empty_comment'                            => true,
@@ -64,5 +62,4 @@ return (new PhpCsFixer\Config())
         'unary_operator_spaces'                       => true,
         'whitespace_after_comma_in_array'             => true,
     ])
-    ->setFinder($finder)
-;
+    ->setFinder($finder);
