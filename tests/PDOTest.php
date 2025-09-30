@@ -11,18 +11,16 @@
 
 namespace DealNews\DB\Tests;
 
-use \DealNews\DB\Factory;
-use \DealNews\DB\PDO;
+use DealNews\DB\Factory;
+use DealNews\DB\PDO;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group integration
- */
+#[Group('integration')]
 class PDOTest extends \PHPUnit\Framework\TestCase {
     use RequireDatabase;
 
-    /**
-     * @dataProvider errorCodeData
-     */
+    #[DataProvider('errorCodeData')]
     public function testCheckErrorCode($code, $reconnect, $retry, $driver) {
         $class = new class($driver) extends PDO {
             protected $driver;

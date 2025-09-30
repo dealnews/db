@@ -2,11 +2,10 @@
 
 namespace DealNews\DB\Tests;
 
-use \DealNews\DB\CRUD;
+use DealNews\DB\CRUD;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group integration
- */
+#[Group('integration')]
 class CRUDTest extends \PHPUnit\Framework\TestCase {
     use RequireDatabase {
         RequireDatabase::setUp as dbSetup;
@@ -45,9 +44,6 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group integration
-     */
     public function testMySQLQuoteString() {
         $db = \DealNews\DB\Factory::init('mytestdb');
         $this->assertTrue(
@@ -64,9 +60,6 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group integration
-     */
     public function testPostgresLimit() {
         $db = \DealNews\DB\Factory::init('pgpdotestdb');
         $this->assertTrue(
