@@ -11,18 +11,16 @@
 
 namespace DealNews\DB\Tests;
 
-use \DealNews\DB\Factory;
-use \DealNews\DB\PDO;
+use DealNews\DB\Factory;
+use DealNews\DB\PDO;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group integration
- */
+#[Group('integration')]
 class FactoryTest extends \PHPUnit\Framework\TestCase {
     use RequireDatabase;
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testGetConfigEmptyDB() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->onlyMethods(['get'])
@@ -45,7 +43,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
 
         // Configure the stub.
         $gc->method('get')
-             ->will($this->returnValueMap($map));
+             ->willReturnMap($map);
 
         $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
@@ -64,9 +62,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testGetConfigDefaultPrefix() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->onlyMethods(['get'])
@@ -89,7 +85,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
 
         // Configure the stub.
         $gc->method('get')
-             ->will($this->returnValueMap($map));
+             ->willReturnMap($map);
 
         $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
@@ -108,9 +104,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testGetConfigCustomPrefix() {
         $gc = $this->getMockBuilder('\\DealNews\\GetConfig\\GetConfig')
                    ->onlyMethods(['get'])
@@ -133,7 +127,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
 
         // Configure the stub.
         $gc->method('get')
-             ->will($this->returnValueMap($map));
+             ->willReturnMap($map);
 
         $config = Factory::getConfig('test', $gc);
         $this->assertEquals(
@@ -152,10 +146,8 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     * @dataProvider loadConfigData
-     */
+    #[Group('unit')]
+    #[DataProvider('loadConfigData')]
     public function testLoadConfig($config, $options, $type, $expect) {
         $config = Factory::loadConfig($config, $options, $type);
         $this->assertEquals(
@@ -275,9 +267,6 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @group integration
-     */
     public function testInit() {
         $drivers = \PDO::getAvailableDrivers();
 
@@ -291,9 +280,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         $this->assertSame($db1, $db2);
     }
 
-    /**
-     * @dataProvider buildData
-     */
+    #[DataProvider('buildData')]
     public function testBuild($type, $dbname, $fixture, $options = [], $expect = null) {
         $drivers = \PDO::getAvailableDrivers();
 
@@ -377,9 +364,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         ];
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testNoDSN() {
         $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(1);
@@ -393,9 +378,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testBadType() {
         $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(2);
@@ -411,9 +394,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testNoServer() {
         $this->expectException('\\LogicException');
         $this->expectExceptionCode(3);
@@ -428,9 +409,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testBadOptions() {
         $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(4);
@@ -447,9 +426,7 @@ class FactoryTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    /**
-     * @group unit
-     */
+    #[Group('unit')]
     public function testNoDB() {
         $this->expectException('\\UnexpectedValueException');
         $this->expectExceptionCode(5);

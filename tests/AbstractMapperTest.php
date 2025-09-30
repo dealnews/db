@@ -2,17 +2,16 @@
 
 namespace DealNews\DB\Tests;
 
-use \DealNews\DB\Tests\TestClasses\Assignment;
-use \DealNews\DB\Tests\TestClasses\BadClass;
-use \DealNews\DB\Tests\TestClasses\Course;
-use \DealNews\DB\Tests\TestClasses\Mapper\BadCourseMapper;
-use \DealNews\DB\Tests\TestClasses\Mapper\CourseMapper;
-use \DealNews\DB\Tests\TestClasses\Mapper\StudentMapper;
-use \DealNews\DB\Tests\TestClasses\Student;
+use DealNews\DB\Tests\TestClasses\Assignment;
+use DealNews\DB\Tests\TestClasses\BadClass;
+use DealNews\DB\Tests\TestClasses\Course;
+use DealNews\DB\Tests\TestClasses\Mapper\BadCourseMapper;
+use DealNews\DB\Tests\TestClasses\Mapper\CourseMapper;
+use DealNews\DB\Tests\TestClasses\Mapper\StudentMapper;
+use DealNews\DB\Tests\TestClasses\Student;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group unit
- */
+#[Group('unit')]
 class AbstractMapperTest extends \PHPUnit\Framework\TestCase {
 
     public function testCreateWithPrimaryKey() {

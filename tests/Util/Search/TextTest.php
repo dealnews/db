@@ -3,10 +3,10 @@
 namespace DealNews\DB\Tests\Util\Search;
 
 use DealNews\DB\Util\Search\Text;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group unit
- */
+#[Group('unit')]
 class TextTest extends \PHPUnit\Framework\TestCase {
 
     public function testCreateLikeString() {
@@ -20,9 +20,8 @@ class TextTest extends \PHPUnit\Framework\TestCase {
      * @param array $fields
      * @param array $tokens
      * @param string $expected
-     *
-     * @dataProvider createLikeStringFromTokensProvider
      */
+    #[DataProvider('createLikeStringFromTokensProvider')]
     public function testCreateLikeStringFromTokens(array $fields, array $tokens, string $expected) {
         $text = new Text();
 
