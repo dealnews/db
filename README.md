@@ -99,7 +99,7 @@ $stmt = $crud->run(
 ## Data Mapper Pattern
 
 This library includes an abstract mapper class for creating [data mapper](https://en.wikipedia.org/wiki/Data_mapper_pattern) 
-classes. The data mapper pattern separates the object from how it is stored. A a [value object](https://en.wikipedia.org/wiki/Value_object)
+classes. The data mapper pattern separates the object from how it is stored. A [value object](https://en.wikipedia.org/wiki/Value_object)
 is created and a data mapper that is responsible for CRUD operations to and from a datastore.
 
 ```php
