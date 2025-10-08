@@ -3,8 +3,8 @@
 
 ## Factory
 
-The factory creates PDO objects using \DealNews\GetConfigto
-read database settings and create a PDO database connection.
+The factory creates PDO objects using [DealNews\GetConfig](https://github.com/dealnews/get-config) to
+read database settings (from `[app home]/etc/config.ini`) and create a PDO database connection.
 
 ### Supported Settings
 
