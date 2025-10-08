@@ -7,21 +7,75 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require __DIR__ . '/../../../autoload.php';
 }
 
-$opts = getopt('', [
-    'db:',
-    'schema:',
-    'table:',
-    'dir:',
-    'ini-file:',
-    'namespace:',
-    'base-class:',
-]);
+use DealNews\Console\Console;
+use DealNews\DB\CRUD;
+
+$console = new Console(
+    [
+        "copyright" => [
+            "owner" => "DealNews.com, Inc.",
+            "year"  => "1997-" . date("Y")
+        ],
+        "help"      => [
+            "header" => "This script builds data objects and mappers."
+        ]
+    ],
+    [
+        'db' => [
+            "description" => "Name of the databse configuration in config.ini",
+            "param"       => "DBNAME",
+            "optional"    => Console::REQUIRED,
+        ],
+        'schema' => [
+            "description" => "Name of the databse schema if different from the database configuration name.",
+            "param"       => "SCHEMA",
+            "optional"    => Console::OPTIONAL,
+        ],
+        'table' => [
+            "description" => "Name of the databse table to create objects for.",
+            "param"       => "TABLE",
+            "optional"    => Console::REQUIRED,
+        ],
+        'dir' => [
+            "description" => "Directory to write objects to. Defaults to `src`.",
+            "param"       => "DIR",
+            "optional"    => Console::OPTIONAL,
+        ],
+        'ini-file' => [
+            "description" => "Alternate ini file to use. Defaults to etc/config.ini.",
+            "param"       => "FILE",
+            "optional"    => Console::OPTIONAL,
+        ],
+        'namespace' => [
+            "description" => "Base namespace for objects.",
+            "param"       => "NAMESPACE",
+            "optional"    => Console::REQUIRED,
+        ],
+        'base-class' => [
+            "description" => "Optional base class for value objects. See README for recommendations.",
+            "param"       => "CLASS",
+            "optional"    => Console::OPTIONAL,
+        ],
+    ]
+);
+
+$console->run();
+
+$opts = [
+    'db'         => $console->getOpt('db'),
+    'schema'     => $console->getOpt('schema') ?? $console->getOpt('db'),
+    'table'      => $console->getOpt('table'),
+    'dir'        => $console->getOpt('dir') ?? 'src',
+    'ini-file'   => $console->getOpt('ini-file'),
+    'namespace'  => $console->getOpt('namespace'),
+    'base-class' => $console->getOpt('base-class'),
+];
 
 if (!empty($opts['ini-file'])) {
     putenv('DN_INI_FILE=' . $opts['ini-file']);
 }
 
-$db = \DealNews\DB\CRUD::factory($opts['db']);
+$db = CRUD::factory($opts['db']);
 
 $driver = $db->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
@@ -133,25 +187,24 @@ foreach ($schema as $column) {
     }
 
     $properties[$column['column_name']] = [
-        'type'    => $type,
-        'default' => $default,
+            'type'    => $type,
+            'default' => $default,
     ];
 }
 
 $object_name = rtrim(str_replace(' ', '', ucwords(str_replace('_', ' ', $opts['table']))), 's');
 
 
-
 create_value_object($properties, $opts['namespace'], $object_name, $opts['base-class'], $opts['schema'], $opts['table'], $opts['dir']);
-create_mapper($properties, $opts['namespace'], $object_name, $opts['base-class'], $opts['schema'], $opts['table'], $opts['dir'], $primary_key);
+create_mapper($properties, $opts['namespace'], $object_name, $opts['base-class'], $opts['schema'], $opts['table'], $opts['dir'], $primary_key, $opts['db']);
 
-function create_value_object($properties, $namespace, $object_name, $base_class, $schema, $table, $dir) {
+function create_value_object($properties, $namespace, $object_name, $base_class, $schema, $table, $dir): void {
 
     if (!empty($base_class)) {
         $base_class = " extends $base_class";
     }
 
-    $file  = "<?php\n\n";
+    $file = "<?php\n\n";
 
     $file .= "namespace $namespace\\Data;\n\n";
 
@@ -180,7 +233,7 @@ function create_value_object($properties, $namespace, $object_name, $base_class,
         $file .= "     */\n";
         if (strpos($settings['type'], 'DateTime') !== false) {
             $has_datetime = true;
-            $file .= "    public {$settings['type']} \$$name;\n\n";
+            $file         .= "    public {$settings['type']} \$$name;\n\n";
         } else {
             $file .= "    public {$settings['type']} \$$name = $default;\n\n";
         }
@@ -210,13 +263,18 @@ function create_value_object($properties, $namespace, $object_name, $base_class,
     file_put_contents("$dir/Data/$object_name.php", $file);
 }
 
-function create_mapper($properties, $namespace, $object_name, $base_class, $schema, $table, $dir, $primary_key) {
+function create_mapper($properties, $namespace, $object_name, $base_class, $schema, $table, $dir, $primary_key, $db): void {
 
-    $file  = "<?php\n";
+    $file = "<?php\n";
     $file .= "\n";
     $file .= "namespace $namespace\\Mapper;\n";
     $file .= "\n";
     $file .= "class $object_name extends \\DealNews\\DB\\AbstractMapper {\n";
+    $file .= "\n";
+    $file .= "    /**\n";
+    $file .= "     * Database name\n";
+    $file .= "     */\n";
+    $file .= "    public const DATABASE_NAME = '$db';\n";
     $file .= "\n";
     $file .= "    /**\n";
     $file .= "     * Table name\n";
