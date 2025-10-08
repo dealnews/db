@@ -8,17 +8,28 @@ read database settings (from `[app home]/etc/config.ini`) and create a PDO datab
 
 ### Supported Settings
 
-| Setting | Description                                                                          |
-|---------|--------------------------------------------------------------------------------------|
-| type    | This may be one of `pdo`, `mysql`, or `pgsql`. All types return PDO connections.     |
-| dsn     | A valid PDO DSN. See each driver for specifics                                       |
-| db      | The name of the database. For PDO, this is usually in the DSN.                       |
-| server  | One of more comma separated servers names. Not used by the `pdo` type.               |
-| port    | Server port. Not used by the `pdo` type.                                             |
-| user    | Database user name. Not all PDO drivers require one.                                 |
-| pass    | Database password. Not all PDO drivers require one.                                  |
-| charset | Character set to use for `mysql` connections. The default is `utf8mb4`.              |
-| options | A JSON encoded array of options to pass to the PDO constructor. These vary by driver |
+| Setting | Description                                                                           |
+|---------|---------------------------------------------------------------------------------------|
+| type    | This may be one of `pdo`, `mysql`, or `pgsql`. All types return PDO connections.      |
+| dsn     | A valid PDO DSN. See each driver for specifics                                        |
+| db      | The name of the database. For PDO, this is usually in the DSN.                        |
+| server  | One of more comma separated servers names. Not used by the `pdo` type.                |
+| port    | Server port. Not used by the `pdo` type.                                              |
+| user    | Database user name. Not all PDO drivers require one.                                  |
+| pass    | Database password. Not all PDO drivers require one.                                   |
+| charset | Character set to use for `mysql` connections. The default is `utf8mb4`.               |
+| options | A JSON encoded array of options to pass to the PDO constructor. These vary by driver. |
+
+### Example config.ini file
+
+This file should be stored in a directory named `etc` in the application's home directory. 
+
+```ini
+db.example.type   = mysql
+db.example.server = 127.0.0.1
+db.example.user   = example
+db.example.pass   = example
+```
 
 ### Usage
 
