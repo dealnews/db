@@ -52,9 +52,9 @@ $console = new Console(
             "optional"    => Console::REQUIRED,
         ],
         'base-class' => [
-                "description" => "Base class for value objects.",
-                "param"       => "CLASS",
-                "optional"    => Console::OPTIONAL,
+            "description" => "Optional base class for value objects. See README for recommendations.",
+            "param"       => "CLASS",
+            "optional"    => Console::OPTIONAL,
         ],
     ]
 );
