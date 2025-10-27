@@ -46,8 +46,7 @@ The `CRUD` class is a helper that wraps up common PDO logic for CRUD operations.
 ### Basic Usage
 
 ```php
-$mydb = \DealNews\DB\Factory::init("mydb");
-$crud = new \DealNews\DB\CRUD($mydb);
+$crud = \DealNews\DB\CRUD::factory('mydb');
 
 // Create
 $result = $crud->create(
