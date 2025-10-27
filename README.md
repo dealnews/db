@@ -25,10 +25,10 @@ read database settings (from `[app home]/etc/config.ini`) and create a PDO datab
 This file should be stored in a directory named `etc` in the application's home directory. 
 
 ```ini
-db.example.type   = mysql
-db.example.server = 127.0.0.1
-db.example.user   = example
-db.example.pass   = example
+db.mydb.type   = mysql
+db.mydb.server = 127.0.0.1
+db.mydb.user   = example
+db.mydb.pass   = example
 ```
 
 ### Usage
