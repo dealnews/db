@@ -102,7 +102,7 @@ class CRUD {
         }
 
         $this->run(
-            'INSERT INTO ' . $table . '
+            'INSERT INTO ' . $this->quoteField($table) . '
                     (' . implode(', ', $cols) . ')
                     VALUES
                     (:' . implode(', :', $keys) . ')',
@@ -145,7 +145,7 @@ class CRUD {
      */
     public function update(string $table, array $data, array $where): bool {
         $this->run(
-            'UPDATE ' . $table . ' SET ' .
+            'UPDATE ' . $this->quoteField($table) . ' SET ' .
             $this->buildUpdateClause($data) . ' ' .
             'WHERE ' . $this->buildWhereClause($where, 1),
             array_merge(
@@ -166,7 +166,7 @@ class CRUD {
      */
     public function delete(string $table, array $data): bool {
         $this->run(
-            'DELETE FROM ' . $table . ' WHERE ' . $this->buildWhereClause($data),
+            'DELETE FROM ' . $this->quoteField($table) . ' WHERE ' . $this->buildWhereClause($data),
             $this->buildParameters($data)
         );
 
@@ -340,7 +340,7 @@ class CRUD {
             }
         }
 
-        $query = 'SELECT ' . implode(', ', $fields) . ' FROM ' . $table;
+        $query = 'SELECT ' . implode(', ', $fields) . ' FROM ' . $this->quoteField($table);
 
         if (!empty($data)) {
             $query .= ' WHERE ' . $this->buildWhereClause($data);
