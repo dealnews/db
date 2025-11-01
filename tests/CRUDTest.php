@@ -26,7 +26,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
     public function testBuildSelectQuery() {
         $query = $this->crud->buildSelectQuery('table');
         $this->assertEquals(
-            'SELECT * FROM table',
+            'SELECT * FROM "table"',
             $query
         );
 
@@ -39,7 +39,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
             'some_col'
         );
         $this->assertEquals(
-            'SELECT "some_col", "foo" FROM table WHERE ("foo" = :foo0) ORDER BY "some_col" LIMIT 200, 100',
+            'SELECT "some_col", "foo" FROM "table" WHERE ("foo" = :foo0) ORDER BY "some_col" LIMIT 200, 100',
             $query
         );
     }
@@ -55,7 +55,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
 
         $query = $crud->buildSelectQuery('time_dimension', [], 1, 2, ['foo', 'bar'], 'time_key desc, foo, bar');
         $this->assertEquals(
-            'SELECT `foo`, `bar` FROM time_dimension ORDER BY `time_key` desc, `foo`, `bar` LIMIT 2, 1',
+            'SELECT `foo`, `bar` FROM `time_dimension` ORDER BY `time_key` desc, `foo`, `bar` LIMIT 2, 1',
             $query
         );
     }
@@ -71,7 +71,7 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
 
         $query = $crud->buildSelectQuery('time_dimension', [], 1, 2, ['*'], 'time_key');
         $this->assertEquals(
-            'SELECT * FROM time_dimension ORDER BY "time_key" LIMIT 1 OFFSET 2',
+            'SELECT * FROM "time_dimension" ORDER BY "time_key" LIMIT 1 OFFSET 2',
             $query
         );
     }
