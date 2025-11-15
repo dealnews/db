@@ -518,14 +518,14 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
                 $obj->{$prop} = $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]);
             }
 
-            $objects[$key] = $mapper->save($obj);
+            ($object->$property)[$key] = $mapper->save($obj);
         }
 
         $this->setValue(
             $object,
             $property,
             [
-                $property => $objects,
+                $property => $object->$property,
             ],
             $mapping
         );
