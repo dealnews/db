@@ -511,23 +511,21 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         // save current object values
         $mapper = new $mapping['mapper']();
 
-        $objects = $this->getValue($object, $property, $mapping);
-
-        foreach ($objects as $key => $obj) {
+        foreach ($object->$property as $key => $obj) {
             $prop = $mapping['foreign_property'] ?? $mapping['foreign_column'] ?? null;
             if (property_exists($obj, $prop)) {
                 // @phan-suppress-next-line PhanTypeArraySuspicious, PhanTypeInvalidDimOffset
                 $obj->{$prop} = $this->getValue($object, $this::PRIMARY_KEY, $this::MAPPING[$this::PRIMARY_KEY]);
             }
 
-            $objects[$key] = $mapper->save($obj);
+            ($object->$property)[$key] = $mapper->save($obj);
         }
 
         $this->setValue(
             $object,
             $property,
             [
-                $property => $objects,
+                $property => $object->$property,
             ],
             $mapping
         );
