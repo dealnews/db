@@ -570,10 +570,10 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * @return array
      */
     protected function getData($object): array {
-        $data = [];
+        $data = parent::getData($object);
         foreach ($this::MAPPING as $property => $mapping) {
-            if (empty($mapping['mapper'])) {
-                $data[$property] = $this->getValue($object, $property, $mapping);
+            if (!empty($mapping['mapper'])) {
+                unset($data[$property]);
             }
         }
 
