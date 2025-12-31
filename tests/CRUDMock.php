@@ -5,7 +5,7 @@ namespace DealNews\DB\Tests;
 class CRUDMock extends \DealNews\DB\CRUD {
     use GetStack;
 
-    public $pdo;
+    public \DealNews\DB\PDO $pdo;
 
     public function __construct(array $stacks) {
         $this->stacks = $stacks;
@@ -87,13 +87,13 @@ class CRUDMock extends \DealNews\DB\CRUD {
                 $this->stacks = $stacks;
             }
 
-            public function __call($method, $args = []) {
+            public function __call(string $method, array $args = []) {
                 $return = $this->getStack($method, null);
 
                 return $return;
             }
 
-            public function __get($property) {
+            public function __get(string $property) {
                 $return = $this->getStack($method, null);
 
                 return $return;
@@ -105,7 +105,7 @@ class CRUDMock extends \DealNews\DB\CRUD {
                 return $return;
             }
 
-            public function connect($reconnect = false) {
+            public function connect(bool $reconnect = false) {
             }
         };
 

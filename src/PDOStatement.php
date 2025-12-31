@@ -16,14 +16,14 @@ class PDOStatement {
      *
      * @var \PDOStatement
      */
-    protected $stmt;
+    protected \PDOStatement $stmt;
 
     /**
      * PDO object which created the statement
      *
      * @var PDO
      */
-    protected $pdo;
+    protected PDO $pdo;
 
     /**
      * Creates the object
@@ -39,12 +39,12 @@ class PDOStatement {
     /**
      * Wrapper for \PDOStatement object
      *
-     * @param  string $method Method name
-     * @param  array  $args   Arguments
+     * @param string $method Method name
+     * @param array  $args   Arguments
      *
      * @return mixed
      */
-    public function __call($method, $args = []) {
+    public function __call(string $method, array $args = []) {
         return call_user_func_array(
             [$this->stmt, $method],
             $args
@@ -54,11 +54,11 @@ class PDOStatement {
     /**
      * Wrapper for \PDOStatement object
      *
-     * @param  string $property
+     * @param string $property
      *
      * @return mixed
      */
-    public function __get($property) {
+    public function __get(string $property) {
         return $this->stmt->$property ?? null;
     }
 
@@ -68,7 +68,7 @@ class PDOStatement {
      * @return bool
      * @phan-suppress PhanUnusedPublicNoOverrideMethodParameter
      */
-    public function execute(?array $input_parameters = []) {
+    public function execute(?array $input_parameters = []): bool {
         $result = false;
         for ($x = 1; $x <= PDO::RETRY_LIMIT; $x++) {
             try {
@@ -101,11 +101,11 @@ class PDOStatement {
     /**
      * Calls connect on PDO object
      *
-     * @param  boolean $reconnect If true, a new object will be created
+     * @param boolean $reconnect If true, a new object will be created
      *
      * @return void
      */
-    public function connect($reconnect = false) {
+    public function connect(bool $reconnect = false): void {
         $this->pdo->connect($reconnect);
     }
 }

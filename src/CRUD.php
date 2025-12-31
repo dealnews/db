@@ -15,16 +15,16 @@ class CRUD {
 
     /**
      * PDO Object
-     * @var \DealNews\DB\PDO
+     * @var PDO
      */
-    protected $pdo;
+    public readonly PDO $pdo;
 
     /**
      * Character used to quote column names in queries
      *
      * @var        string
      */
-    protected $quote_column_char = '"';
+    protected string $quote_column_char = '"';
 
     /**
      * Helper factory for creating singletons using only a db name
@@ -46,7 +46,7 @@ class CRUD {
     /**
      * Creates a new CRUD object
      *
-     * @param \DealNews\DB\PDO $pdo PDO object
+     * @param PDO $pdo PDO object
      */
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
@@ -58,20 +58,6 @@ class CRUD {
             case 'mysql':
                 $this->quote_column_char = '`';
                 break;
-        }
-    }
-
-    /**
-     * Getter for getting the pdo object
-     *
-     * @param  string $var Property name. Only `pdo` is allowed.
-     * @return \DealNews\DB\PDO
-     */
-    public function __get($var) {
-        if ($var == 'pdo') {
-            return $this->pdo;
-        } else {
-            throw new \LogicException("Invalid property $var for " . get_class($this));
         }
     }
 
@@ -392,7 +378,7 @@ class CRUD {
      *
      * @return     string
      */
-    protected function quoteField(string $field): string {
+    public function quoteField(string $field): string {
         return $this->quote_column_char . $field . $this->quote_column_char;
     }
 }

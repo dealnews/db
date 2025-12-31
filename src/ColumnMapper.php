@@ -65,7 +65,7 @@ class ColumnMapper {
     /**
      * Loads the data from the database
      *
-     * @param  int|string    $id Primay key id of the object to look up
+     * @param  int|string    $id Primary key id of the object to look up
      *
      * @return array
      */
@@ -90,7 +90,7 @@ class ColumnMapper {
     /**
      * Saves the data
      *
-     * @param  int|string    $id    Primay key id of the object to look up
+     * @param  int|string    $id    Primary key id of the object to look up
      * @param  array         $data  Values to save
      *
      * @return array
