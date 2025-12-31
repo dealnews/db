@@ -609,8 +609,6 @@ class Query {
      * @return void
      */
     protected function detectDriver(CRUD|PDO $connection): void {
-        $pdo = null;
-
         if ($connection instanceof CRUD) {
             $pdo = $connection->pdo;
         } else {
@@ -639,7 +637,6 @@ class Query {
         ?string $operator,
         mixed $value
     ): self {
-        $nested = null;
 
         if (is_callable($column)) {
             // Nested conditions via callable
@@ -846,8 +843,6 @@ class Query {
         $clauses = [];
 
         foreach ($conditions as $index => $condition) {
-            $clause = '';
-
             if ($condition['nested'] !== null) {
                 // Nested conditions
                 $clause = '(' . $this->buildWhereConditions($condition['nested']) . ')';
