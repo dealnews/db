@@ -190,10 +190,14 @@ class Query {
     /**
      * Creates a new Query builder instance
      *
-     * @param CRUD|PDO|string $connection Database connection or driver name
+     * @param CRUD|PDO|string $connection     Database connection or driver name
+     * @param string|null      $driver_override Optional driver name override
      */
-    public function __construct(CRUD|PDO|string $connection) {
-        if (is_string($connection)) {
+    public function __construct(CRUD|PDO|string $connection, ?string $driver_override = null) {
+        if ($driver_override !== null) {
+            $this->driver     = $driver_override;
+            $this->quote_char = ($driver_override === 'mysql') ? '`' : '"';
+        } elseif (is_string($connection)) {
             $this->driver     = $connection;
             $this->quote_char = ($connection === 'mysql') ? '`' : '"';
         } else {
