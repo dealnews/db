@@ -295,7 +295,7 @@ function create_mapper($properties, $namespace, $object_name, $base_class, $sche
     $file .= "     * Defines the properties that are mapped and any\n";
     $file .= "     * additional information needed to map them.\n";
     $file .= "     */\n";
-    $file .= "    protected const MAPPING = [\n";
+    $file .= "    public const MAPPING = [\n";
     foreach (array_keys($properties) as $name) {
         $file .= "        '$name' => [],\n";
     }
