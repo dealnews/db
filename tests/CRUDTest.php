@@ -5,6 +5,22 @@ namespace DealNews\DB\Tests;
 use DealNews\DB\CRUD;
 use PHPUnit\Framework\Attributes\Group;
 
+/**
+ * Exposes protected methods for testing
+ */
+class CRUDTestable extends CRUD {
+    /**
+     * Expose fieldToParam for testing
+     *
+     * @param  string  $field  The field name
+     *
+     * @return string  Encoded parameter name
+     */
+    public function fieldToParam(string $field): string {
+        return parent::fieldToParam($field);
+    }
+}
+
 #[Group('integration')]
 class CRUDTest extends \PHPUnit\Framework\TestCase {
     use RequireDatabase {
@@ -409,6 +425,258 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         $this->assertNotEquals(
             $rows,
             $other_rows
+        );
+    }
+
+    /**
+     * Tests quoteField with dot-notation (table.field)
+     */
+    public function testQuoteFieldDotNotation() {
+        // Two-part: table.field
+        $result = $this->crud->quoteField('users.id');
+        $this->assertEquals(
+            '"users"."id"',
+            $result,
+            'table.field dot notation'
+        );
+
+        // Three-part: schema.table.field
+        $result = $this->crud->quoteField('public.users.id');
+        $this->assertEquals(
+            '"public"."users"."id"',
+            $result,
+            'schema.table.field dot notation'
+        );
+
+        // Wildcard: table.*
+        $result = $this->crud->quoteField('users.*');
+        $this->assertEquals(
+            '"users".*',
+            $result,
+            'table.* wildcard notation'
+        );
+
+        // Simple field without dot
+        $result = $this->crud->quoteField('id');
+        $this->assertEquals(
+            '"id"',
+            $result,
+            'simple field name'
+        );
+
+        // Plain wildcard
+        $result = $this->crud->quoteField('*');
+        $this->assertEquals(
+            '*',
+            $result,
+            'plain wildcard'
+        );
+    }
+
+    /**
+     * Tests fieldToParam encoding of special characters
+     */
+    public function testFieldToParam() {
+        // Need testable subclass to access protected method
+        $testable = new CRUDTestable($this->crud->pdo);
+
+        // Simple field name unchanged
+        $result = $testable->fieldToParam('id');
+        $this->assertEquals('id', $result, 'simple field unchanged');
+
+        // Underscore preserved
+        $result = $testable->fieldToParam('user_id');
+        $this->assertEquals('user_id', $result, 'underscore preserved');
+
+        // Dot encoded as _2e (0x2e = 46 decimal = '.')
+        $result = $testable->fieldToParam('users.id');
+        $this->assertEquals('users_2eid', $result, 'dot encoded as hex');
+
+        // Multiple dots
+        $result = $testable->fieldToParam('schema.table.field');
+        $this->assertEquals('schema_2etable_2efield', $result, 'multiple dots encoded');
+
+        // Verify no collision between users.id and users_id
+        $dotted     = $testable->fieldToParam('users.id');
+        $underscored = $testable->fieldToParam('users_id');
+        $this->assertNotEquals(
+            $dotted,
+            $underscored,
+            'users.id and users_id must produce different param names'
+        );
+    }
+
+    /**
+     * Tests buildParameters with dot-notation fields
+     */
+    public function testBuildParametersDotNotation() {
+        $result = $this->crud->buildParameters([
+            'users.id' => 1,
+        ]);
+        $this->assertEquals(
+            [':users_2eid0' => 1],
+            $result,
+            'dotted field in parameters'
+        );
+
+        // Multiple dotted fields
+        $result = $this->crud->buildParameters([
+            'users.id'     => 1,
+            'posts.author' => 'John',
+        ]);
+        $this->assertEquals(
+            [
+                ':users_2eid0'     => 1,
+                ':posts_2eauthor0' => 'John',
+            ],
+            $result,
+            'multiple dotted fields'
+        );
+
+        // Mixed dotted and simple fields
+        $result = $this->crud->buildParameters([
+            'users.id' => 1,
+            'name'     => 'test',
+        ]);
+        $this->assertEquals(
+            [
+                ':users_2eid0' => 1,
+                ':name0'       => 'test',
+            ],
+            $result,
+            'mixed dotted and simple fields'
+        );
+
+        // Array values with dotted field
+        $result = $this->crud->buildParameters([
+            'users.status' => ['active', 'pending'],
+        ]);
+        $this->assertEquals(
+            [
+                ':users_2estatus00' => 'active',
+                ':users_2estatus10' => 'pending',
+            ],
+            $result,
+            'array values with dotted field'
+        );
+    }
+
+    /**
+     * Tests buildWhereClause with dot-notation fields
+     */
+    public function testBuildWhereClauseDotNotation() {
+        // Single dotted field
+        $result = $this->crud->buildWhereClause([
+            'users.id' => 1,
+        ]);
+        $this->assertEquals(
+            '("users"."id" = :users_2eid0)',
+            $result,
+            'dotted field in where clause'
+        );
+
+        // Multiple dotted fields
+        $result = $this->crud->buildWhereClause([
+            'users.id'    => 1,
+            'users.name'  => 'John',
+        ]);
+        $this->assertEquals(
+            '("users"."id" = :users_2eid0 AND "users"."name" = :users_2ename0)',
+            $result,
+            'multiple dotted fields in where clause'
+        );
+
+        // OR with dotted fields
+        $result = $this->crud->buildWhereClause([
+            'OR' => [
+                'users.status' => 'active',
+                'users.role'   => 'admin',
+            ],
+        ]);
+        $this->assertEquals(
+            '("users"."status" = :users_2estatus1 OR "users"."role" = :users_2erole1)',
+            $result,
+            'OR clause with dotted fields'
+        );
+
+        // Array values with dotted field
+        $result = $this->crud->buildWhereClause([
+            'users.id' => [1, 2, 3],
+        ]);
+        $this->assertEquals(
+            '(("users"."id" = :users_2eid00 OR "users"."id" = :users_2eid10 OR "users"."id" = :users_2eid20))',
+            $result,
+            'array values with dotted field'
+        );
+    }
+
+    /**
+     * Tests buildUpdateClause with dot-notation fields
+     */
+    public function testBuildUpdateClauseDotNotation() {
+        $result = $this->crud->buildUpdateClause([
+            'users.name'   => 'John',
+            'users.status' => 'active',
+        ]);
+        $this->assertEquals(
+            '"users"."name" = :users_2ename0, "users"."status" = :users_2estatus0',
+            $result,
+            'dotted fields in update clause'
+        );
+    }
+
+    /**
+     * Tests buildSelectQuery with dot-notation in fields list
+     */
+    public function testBuildSelectQueryDotNotation() {
+        // Dotted fields in SELECT
+        $query = $this->crud->buildSelectQuery(
+            'users',
+            [],
+            null,
+            null,
+            ['users.id', 'users.name']
+        );
+        $this->assertEquals(
+            'SELECT "users"."id", "users"."name" FROM "users"',
+            $query,
+            'dotted fields in SELECT list'
+        );
+
+        // Wildcard with table prefix
+        $query = $this->crud->buildSelectQuery(
+            'users',
+            [],
+            null,
+            null,
+            ['users.*']
+        );
+        $this->assertEquals(
+            'SELECT "users".* FROM "users"',
+            $query,
+            'table.* in SELECT list'
+        );
+
+        // Dotted WHERE clause
+        $query = $this->crud->buildSelectQuery(
+            'users',
+            ['users.id' => 1],
+            null,
+            null,
+            ['*']
+        );
+        $this->assertEquals(
+            'SELECT * FROM "users" WHERE ("users"."id" = :users_2eid0)',
+            $query,
+            'dotted field in WHERE'
+        );
+
+        // Schema.table in FROM
+        $query = $this->crud->buildSelectQuery('public.users');
+        $this->assertEquals(
+            'SELECT * FROM "public"."users"',
+            $query,
+            'schema.table in FROM'
         );
     }
 

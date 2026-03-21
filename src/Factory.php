@@ -3,6 +3,7 @@
 namespace DealNews\DB;
 
 use DealNews\GetConfig\GetConfig;
+use PDOException;
 
 /**
  * Database Object Factory
@@ -36,7 +37,7 @@ class Factory {
      * @throws \PDOException
      * @throws \LogicException
      */
-    public static function init(string $db, ?array $options = null, ?string $type = null): PDO {
+    public static function init(string $db, ?array $options = null, ?string $type = null): PDO|false {
         static $objs = [];
 
         if (!empty($type)) {
@@ -68,14 +69,17 @@ class Factory {
      *
      * @throws \PDOException
      */
-    public static function build(array $config): PDO {
-        $obj = new PDO(
-            $config['dsn'],
-            $config['user'],
-            $config['pass'],
-            $config['options']
-        );
-
+    public static function build(array $config): PDO|false {
+        try {
+            $obj = new PDO(
+                $config['dsn'],
+                $config['user'],
+                $config['pass'],
+                $config['options']
+            );
+        } catch (\PDOException) {
+            $obj = false;
+        }
         return $obj;
     }
 

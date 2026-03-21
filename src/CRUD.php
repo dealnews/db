@@ -37,7 +37,11 @@ class CRUD {
         static $instances = [];
 
         if (empty($instances[$db_name])) {
-            $instances[$db_name] = new self(Factory::init($db_name));
+            $pdo = Factory::init($db_name);
+            if ($pdo === false) {
+                throw new \RuntimeException("Could not connect to database $db_name");
+            }
+            $instances[$db_name] = new self($pdo);
         }
 
         return $instances[$db_name];
@@ -212,12 +216,13 @@ class CRUD {
         $parameters = [];
         foreach ($fields as $field => $value) {
             if (!is_numeric($field) && $field != 'OR' && $field != 'AND') {
+                $param_name = $this->fieldToParam($field);
                 if (is_array($value)) {
                     foreach ($value as $key => $val) {
-                        $parameters[":{$field}{$key}{$depth}"] = $val;
+                        $parameters[":{$param_name}{$key}{$depth}"] = $val;
                     }
                 } else {
-                    $parameters[":{$field}{$depth}"] = $value;
+                    $parameters[":{$param_name}{$depth}"] = $value;
                 }
             } elseif (is_array($value)) {
                 if (count($fields) > 1 && ($field === 'OR' || $field === 'AND')) {
@@ -257,12 +262,15 @@ class CRUD {
 
         foreach ($fields as $field => $value) {
             if (!is_numeric($field)) {
+                $param_name = $this->fieldToParam($field);
                 if (is_scalar($value)) {
-                    $clauses[] = $this->quoteField($field) . " = :{$field}{$depth}";
+                    $clauses[] = $this->quoteField($field) .
+                                 " = :{$param_name}{$depth}";
                 } elseif (is_array($value)) {
                     $field_clauses = [];
-                    foreach ($value as $key => $val) {
-                        $field_clauses[] = $this->quoteField($field) . " = :{$field}{$key}{$depth}";
+                    foreach (array_keys($value) as $key) {
+                        $field_clauses[] = $this->quoteField($field) .
+                                           " = :{$param_name}{$key}{$depth}";
                     }
                     if (count($field_clauses) > 1) {
                         $clauses[] = '(' . implode(' OR ', $field_clauses) . ')';
@@ -270,7 +278,7 @@ class CRUD {
                         $clauses[] = reset($field_clauses);
                     }
                 } else {
-                    throw new \InvalidArgumentException('Invalid field value ' . gettype($value), 1);
+                    throw new \InvalidArgumentException('Invalid field value ' . gettype($value) . " for $field", 1);
                 }
             } elseif (is_array($value)) {
                 $depth++;
@@ -294,14 +302,16 @@ class CRUD {
      */
     public function buildUpdateClause(array $fields, int $depth = 0): string {
         $clauses = [];
-        foreach ($fields as $field => $value) {
+        foreach (array_keys($fields) as $field) {
             if (is_numeric($field)) {
                 throw new \LogicException("Invalid field name $field for update clause.", 1);
             }
             if (empty($field)) {
                 throw new \LogicException("Invalid value for $field in update.", 2);
             }
-            $clauses[] = $this->quoteField($field) . " = :{$field}{$depth}";
+            $param_name = $this->fieldToParam($field);
+            $clauses[]  = $this->quoteField($field) .
+                          " = :{$param_name}{$depth}";
         }
 
         return implode(', ', $clauses);
@@ -374,11 +384,68 @@ class CRUD {
     /**
      * Quotes a field name using the correct quote character
      *
-     * @param      string  $field  The field
+     * Handles dotted notation for table.field or schema.table.field.
+     * Each segment is quoted separately.
      *
-     * @return     string
+     * @param      string  $field  The field name, optionally with
+     *                             table/schema prefix (e.g., "table.field")
+     *
+     * @return     string  Quoted field name
      */
     public function quoteField(string $field): string {
-        return $this->quote_column_char . $field . $this->quote_column_char;
+        if (strpos($field, '.') !== false) {
+            $parts        = explode('.', $field);
+            $quoted_parts = [];
+            foreach ($parts as $part) {
+                if ($part === '*') {
+                    $quoted_parts[] = '*';
+                } else {
+                    $quoted_parts[] = $this->quote_column_char .
+                                      $part .
+                                      $this->quote_column_char;
+                }
+            }
+            $quoted = implode('.', $quoted_parts);
+        } else {
+            if ($field === '*') {
+                $quoted = '*';
+            } else {
+                $quoted = $this->quote_column_char .
+                          $field .
+                          $this->quote_column_char;
+            }
+        }
+
+        return $quoted;
+    }
+
+    /**
+     * Converts a field name to a valid PDO parameter name
+     *
+     * Encodes characters that are not alphanumeric or underscore by
+     * replacing them with an underscore followed by their lowercase hex code.
+     * This prevents collisions between fields like "users.id" and "users_id".
+     * For example, "users.id" becomes "users_2eid" (0x2e is the hex code
+     * for '.').
+     *
+     * @param      string  $field  The field name
+     *
+     * @return     string  Valid parameter name
+     */
+    protected function fieldToParam(string $field): string {
+        $result = '';
+        $length = strlen($field);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = $field[$i];
+
+            if (ctype_alnum($char) || $char === '_') {
+                $result .= $char;
+            } else {
+                $result .= '_' . dechex(ord($char));
+            }
+        }
+
+        return $result;
     }
 }
