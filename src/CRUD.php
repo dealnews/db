@@ -393,8 +393,6 @@ class CRUD {
      * @return     string  Quoted field name
      */
     public function quoteField(string $field): string {
-        $quoted = '';
-
         if (strpos($field, '.') !== false) {
             $parts        = explode('.', $field);
             $quoted_parts = [];
