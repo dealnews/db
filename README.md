@@ -202,6 +202,85 @@ make working with the value objects easier.
 
 Documentation coming
 
+## Query Builder
+
+The `Query` class provides a fluent interface for building complex SELECT queries
+with JOINs, subqueries, GROUP BY, HAVING, and more. It complements CRUD for queries
+that go beyond simple single-table operations.
+
+### Basic Usage
+
+```php
+$crud = \DealNews\DB\CRUD::factory('mydb');
+$query = new \DealNews\DB\Util\Query($crud);
+
+$query->select(['id', 'name', 'email'])
+    ->from('users')
+    ->where('status', '=', 'active')
+    ->orderBy('created_at', 'DESC')
+    ->limit(10);
+
+$rows = $crud->runFetch($query->getSql(), $query->getParams());
+```
+
+### Complex Queries with JOINs
+
+```php
+$query = new \DealNews\DB\Util\Query($crud);
+
+$query->select([
+        'u.id',
+        'u.name',
+        \DealNews\DB\Util\Query::raw('COUNT(p.id) AS post_count'),
+        \DealNews\DB\Util\Query::raw('AVG(p.views) AS avg_views'),
+    ])
+    ->from('users', 'u')
+    ->leftJoin('posts', 'p', 'p.user_id', '=', 'u.id')
+    ->leftJoin('profiles', 'pr', 'pr.user_id', '=', 'u.id')
+    ->where('u.status', '=', 'active')
+    ->where('pr.verified', '=', true)
+    ->groupBy(['u.id', 'u.name'])
+    ->having('post_count', '>', 5)
+    ->orderBy('post_count', 'DESC')
+    ->limit(20);
+
+$rows = $crud->runFetch($query->getSql(), $query->getParams());
+```
+
+### Nested WHERE Conditions
+
+```php
+$query->select(['id'])
+    ->from('users')
+    ->where('status', '=', 'active')
+    ->where(function ($q) {
+        $q->where('role', '=', 'admin')
+          ->orWhere('role', '=', 'moderator');
+    });
+
+// Generates: WHERE status = :p0 AND (role = :p1 OR role = :p2)
+```
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `select(array $columns)` | Set SELECT columns |
+| `from(string $table, ?string $alias)` | Set FROM table |
+| `join()`, `innerJoin()`, `leftJoin()`, `rightJoin()` | Add JOIN clauses |
+| `where()`, `orWhere()` | Add WHERE conditions |
+| `whereIn()`, `whereNotIn()` | Add IN conditions |
+| `whereNull()`, `whereNotNull()` | Add NULL checks |
+| `whereRaw(string $sql, array $params)` | Add raw WHERE SQL |
+| `groupBy(array $columns)` | Add GROUP BY |
+| `having()`, `orHaving()` | Add HAVING conditions |
+| `orderBy(string $column, string $direction)` | Add ORDER BY |
+| `limit(int $limit)` | Set LIMIT |
+| `offset(int $offset)` | Set OFFSET |
+| `getSql()` | Build and return the SQL string |
+| `getParams()` | Get the bound parameters |
+| `Query::raw(string $value, array $params)` | Create a raw SQL fragment |
+
 ## Testing
 
 By default, only unit tests are run. To run the functional tests the host

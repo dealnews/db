@@ -23,7 +23,7 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
     #[DataProvider('errorCodeData')]
     public function testCheckErrorCode($code, $reconnect, $retry, $driver) {
         $class = new class($driver) extends PDO {
-            protected $driver;
+            protected string $driver;
 
             public function __construct($driver) {
                 $this->driver  = $driver;
@@ -31,7 +31,7 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
 
             public $reconnect = false;
 
-            public function connect($reconnect = false, ?string $pdo_class = \PDO::class) {
+            public function connect(bool $reconnect = false, ?string $pdo_class = \PDO::class): void {
                 $this->reconnect = $reconnect;
             }
 
@@ -94,7 +94,7 @@ class PDOTest extends \PHPUnit\Framework\TestCase {
         MockPDO::$mock_attempt_count = 0;
         MockPDO::$mock_throw         = false;
         $pdo                         = new class($config['dsn'], $config['user'], $config['pass'], $config['options']) extends \DealNews\DB\PDO {
-            public function connect($reconnect = false, ?string $pdo_class = \PDO::class) {
+            public function connect(bool $reconnect = false, ?string $pdo_class = \PDO::class): void {
                 parent::connect($reconnect, MockPDO::class);
             }
         };

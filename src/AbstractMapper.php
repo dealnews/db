@@ -3,7 +3,7 @@
 namespace DealNews\DB;
 
 /**
- * Maps an object to a database accesible via PDO
+ * Maps an object to a database accessible via PDO
  *
  * @author      Brian Moon <brianm@dealnews.com>
  * @copyright   1997-Present DealNews.com, Inc
@@ -74,7 +74,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
      * CRUD PDO helper object
      * @var \DealNews\DB\CRUD
      */
-    protected CRUD $crud;
+    public readonly CRUD $crud;
 
     /**
      * Creates a new mapper
@@ -95,6 +95,7 @@ abstract class AbstractMapper extends \DealNews\DataMapper\AbstractMapper {
         } else {
             $this->table = $this::TABLE;
         }
+        parent::__construct();
     }
 
     /**

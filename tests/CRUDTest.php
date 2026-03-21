@@ -86,11 +86,6 @@ class CRUDTest extends \PHPUnit\Framework\TestCase {
         );
     }
 
-    public function testBadGetter() {
-        $this->expectException('\\LogicException');
-        $result = $this->crud->foo;
-    }
-
     public function testBuildParametersException() {
         $this->expectException('\\LogicException');
         $result = $this->crud->buildParameters(

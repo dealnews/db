@@ -22,65 +22,65 @@ class PDO {
     /**
      * Real \PDO instance
      *
-     * @var \PDO
+     * @var ?\PDO
      */
-    protected $pdo;
+    protected ?\PDO $pdo = null;
 
     /**
      * PDO Driver
      *
      * @var string
      */
-    protected $driver = '';
+    protected string $driver = '';
 
     /**
      * Database name
      *
      * @var string
      */
-    protected $db = '';
+    protected mixed $db = '';
 
     /**
      * Database server address
      *
      * @var string
      */
-    protected $server = '';
+    protected mixed $server = '';
 
     /**
      * PDO DSN
      *
      * @var string
      */
-    protected $dsn = '';
+    protected string $dsn = '';
 
     /**
      * Database username
      *
-     * @var string
+     * @var ?string
      */
-    protected $username = '';
+    protected ?string $username = '';
 
     /**
      * Database password
      *
-     * @var string
+     * @var ?string
      */
-    protected $passwd = '';
+    protected ?string $passwd = '';
 
     /**
      * PDO options
      *
-     * @var array
+     * @var ?array
      */
-    protected $options = [];
+    protected ?array $options = [];
 
     /**
      * Determines if debug info is logged
      *
      * @var boolean
      */
-    protected static $debug = false;
+    protected static bool $debug = false;
 
     protected const ERROR_CODES = [
         'mysql' => [
@@ -185,15 +185,16 @@ class PDO {
     /**
      * Connects to the database by creating the real \PDO object
      *
-     * @param  boolean $reconnect If true, a new object will be created
-     *
+     * @param boolean     $reconnect If true, a new object will be created
+     * @param string|null $pdo_class
      * @return void
      */
-    public function connect($reconnect = false, ?string $pdo_class = \PDO::class) {
+    public function connect(bool $reconnect = false, ?string $pdo_class = \PDO::class): void {
         if (empty($this->pdo) || $reconnect) {
             $this->pdo = null;
             for ($x = 1; $x <= $this::RETRY_LIMIT; $x++) {
                 try {
+                    // @phan-suppress-next-line PhanTypeExpectedObjectOrClassName
                     $this->pdo = new $pdo_class($this->dsn, $this->username, $this->passwd, $this->options);
 
                     return;
@@ -212,11 +213,11 @@ class PDO {
      *
      * @return bool
      */
-    public function ping() {
+    public function ping(): bool {
         try {
             $this->query('select 1');
             $result = true;
-        } catch (\PDOException $e) { // @phan-suppress-current-line PhanUnusedVariableCaughtException
+        } catch (\PDOException) { // @phan-suppress-current-line PhanUnusedVariableCaughtException
             $result = false;
         }
 
@@ -230,7 +231,7 @@ class PDO {
      *
      * @return bool   Previous value
      */
-    public static function debug(bool $toggle) {
+    public static function debug(bool $toggle): bool {
         $current     = self::$debug;
         self::$debug = $toggle;
 
@@ -240,12 +241,12 @@ class PDO {
     /**
      * Wrapper for \PDO object
      *
-     * @param  string $method Method name
-     * @param  array  $args   Arguments
+     * @param string $method Method name
+     * @param array  $args   Arguments
      *
      * @return mixed
      */
-    public function __call($method, $args = []) {
+    public function __call(string $method, array $args = []) {
         $this->connect();
         for ($x = 1; $x <= $this::RETRY_LIMIT; $x++) {
             try {
@@ -268,7 +269,7 @@ class PDO {
      * @return PDOStatement
      * @phan-suppress PhanUnusedPublicNoOverrideMethodParameter
      */
-    public function prepare(string $statement, ?array $driver_options = []) {
+    public function prepare(string $statement, ?array $driver_options = []): PDOStatement {
         $stmt = $this->__call(__FUNCTION__, func_get_args());
 
         // Convert \PDOStatement to a DealNews\DB\PDOStatement
@@ -281,11 +282,11 @@ class PDO {
 
     /**
      * @see http://php.net/manual/en/pdo.query.php
-     * @param  string $statement
-     * @return PDOStatement
+     * @param string $statement
+     * @return PDOStatement|\PDOStatement
      * @phan-suppress PhanUnusedPublicNoOverrideMethodParameter, PhanPossiblyUndeclaredVariable
      */
-    public function query(string $statement) {
+    public function query(string $statement): PDOStatement|\PDOStatement {
         for ($x = 1; $x <= $this::RETRY_LIMIT; $x++) {
             try {
                 $stmt = $this->__call(__FUNCTION__, func_get_args());
@@ -308,11 +309,11 @@ class PDO {
     /**
      * Determines if an error code is one that should be retried
      *
-     * @param  integer|string $code Error code from \PDOException
+     * @param integer|string $code Error code from \PDOException
      *
      * @return bool
      */
-    public function checkErrorCode($code): bool {
+    public function checkErrorCode(int|string $code): bool {
         $retry           = false;
         $retry_codes     = [];
         $reconnect_codes = [];

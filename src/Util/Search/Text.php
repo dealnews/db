@@ -18,7 +18,7 @@ class Text {
      *
      * @return self
      */
-    public static function init() {
+    public static function init(): Text {
         static $inst;
 
         if (empty($inst)) {
@@ -116,13 +116,14 @@ class Text {
                         }
                     } else {
 
-                        // strip off the ^ and $ for already wildcarded strings
+                        // strip off the ^ and $ for already wild carded strings
                         // as it may not be intuitive otherwise
 
                         if (mb_substr($tok, 0, 1) == '^') {
                             $tok = mb_substr($tok, 1);
                         }
 
+                        // @phan-suppress-next-line PhanTypeArraySuspiciousNullable
                         if ($tok[mb_strlen($tok) - 1] == '$') {
                             $tok = mb_substr($tok, 0, -1);
                         }
@@ -260,7 +261,7 @@ class Text {
                      */
                     if ($char == '"') {
                         /**
-                         * only put us in quotes mode when there there is at
+                         * only put us in quotes mode when there is at
                          * least another bare quote somewhere in the string
                          */
                         $quote_count     = mb_substr_count(mb_substr($string, $x + 1), '"');
