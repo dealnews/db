@@ -38,7 +38,7 @@ class CRUD {
 
         if (empty($instances[$db_name])) {
             $pdo = Factory::init($db_name);
-            if($pdo === false) {
+            if ($pdo === false) {
                 throw new \RuntimeException("Could not connect to database $db_name");
             }
             $instances[$db_name] = new self($pdo);
