@@ -24,7 +24,7 @@ class PDO {
      *
      * @var ?\PDO
      */
-    protected ?\PDO $pdo;
+    protected ?\PDO $pdo = null;
 
     /**
      * PDO Driver
