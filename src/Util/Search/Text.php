@@ -123,6 +123,7 @@ class Text {
                             $tok = mb_substr($tok, 1);
                         }
 
+                        // @phan-suppress-next-line PhanTypeArraySuspiciousNullable
                         if ($tok[mb_strlen($tok) - 1] == '$') {
                             $tok = mb_substr($tok, 0, -1);
                         }
